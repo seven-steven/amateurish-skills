@@ -1,0 +1,7 @@
+# runtime state (machine-local)
+skill/.bin/
+# engine build intermediates never land here; engine.mjs IS committed
+__pycache__/
+*.pyc
+.env
+.DS_Store

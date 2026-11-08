@@ -1,0 +1,11 @@
+services:
+  wxpush:
+    image: ghcr.io/seven-steven/wxmp-publisher-server:latest  # or: build: .
+    restart: unless-stopped
+    environment:
+      - WX_APP_ID=${WX_APP_ID}
+      - WX_APP_SECRET=${WX_APP_SECRET}
+      - WX_TOKEN=${WX_TOKEN}
+      - WX_RATE_LIMIT=${WX_RATE_LIMIT:-30}
+    ports:
+      - "127.0.0.1:8787:8787"

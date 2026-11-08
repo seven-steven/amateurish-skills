@@ -1,4 +1,4 @@
-# Wayfinder map: wechat-publisher 迁移升级
+# Wayfinder map: wxmp-publisher 迁移升级
 
 Label: wayfinder:map
 

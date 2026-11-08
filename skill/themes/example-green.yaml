@@ -1,0 +1,10 @@
+# example custom theme — rename file to your theme name
+base_theme: grace
+base:
+  "--md-primary-color": "#1a7f37"
+block:
+  h2:
+    background: "#1a7f37"
+  h1:
+    "border-bottom": "2px solid #1a7f37"
+inline: {}
