@@ -63,7 +63,7 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 - 构建入口注册本地内置主题,再由 `engine/local-patches.mjs` 对 bundle 应用受校验的补丁:HTML 样式属性转义、可选双层标题、代码布局内联。补丁不匹配时中止,不覆盖已有产物。
 - CLI 保存 `postProcessHtml` 的结果(包含容器和引用链接),去掉微信不保留的 `<style>`;排版所需规则必须内联。
 - 升级引擎 = 改版本号重跑构建脚本,重新提交产物。主题与补丁改动也必须重建,不可只手改 bundle。
-- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 运行两者,相关 push/PR 由 GitHub Actions 自动检查。安装和覆盖范围见 [engine/tests/README.md](../engine/tests/README.md)。
+- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 在本地开发时手动运行两者,不配置 GitHub Actions 自动测试。安装和覆盖范围见 [engine/tests/README.md](../engine/tests/README.md)。
 - 归属:引擎源自 doocs/md(Apache-2.0),见 `engine/ATTRIBUTION.md`。
 
 ## 7. Server 设计

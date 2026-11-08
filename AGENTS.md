@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Rules
+
+- Follow TDD method
+- Run full test after any code change
+
 ## Agent skills
 
 ### Issue tracker
