@@ -5,4 +5,5 @@ COPY server.py .
 RUN useradd -r -u 10001 wxpush
 USER wxpush
 EXPOSE 8787
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:8787", "server:app"]
+# Container lifecycle is managed by Compose; no home-directory control socket needed.
+CMD ["gunicorn", "--no-control-socket", "-w", "1", "-b", "0.0.0.0:8787", "server:app"]

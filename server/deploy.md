@@ -26,3 +26,27 @@
 7. 客户端 `wxpush doctor` 通过即完成。
 
 安全设计全貌见 `docs/security.md` 部署检查单。
+
+## 更新服务
+
+等 GitHub Actions 构建并发布新镜像后,在 compose 文件所在目录执行:
+
+```bash
+docker compose pull
+docker compose up -d --force-recreate
+curl -fsS http://127.0.0.1:8787/health
+```
+
+使用 Podman 时,将 `docker compose` 替换为 `podman-compose`。仅执行 `up -d` 不保证拉取最新镜像。
+
+镜像默认关闭 Gunicorn control socket(由 Compose 管理容器生命周期),避免非 root 用户因没有可写 home 目录而出现 `Control server error: Permission denied`。无需改为 root 或放宽目录权限。
+
+## 本地回归测试
+
+在仓库根目录执行(需安装 uv):
+
+```bash
+uv run --python 3.12 --with flask --with requests --with gunicorn python -m unittest discover -s server/tests -v
+```
+
+启动测试需要非 root 的 POSIX 用户,验证镜像启动命令在没有可写 home 目录时仍能提供 `/health`,且没有 control socket 权限错误。GitHub Actions 会在构建镜像前运行这些测试。
