@@ -17,6 +17,7 @@ import base64
 import hashlib
 import hmac
 import io
+import json
 import logging
 import os
 import threading
@@ -58,9 +59,15 @@ def _wx_get(path: str, **params) -> dict:
 
 def _wx_post(path: str, *, files=None, json_body=None) -> dict:
     params = {"access_token": access_token()}
+    payload = None
+    headers = None
+    if json_body is not None:
+        # WeChat can display Requests' default ASCII escapes literally in drafts.
+        payload = json.dumps(json_body, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        headers = {"Content-Type": "application/json; charset=utf-8"}
     r = requests.post(
         f"https://api.weixin.qq.com{path}", params=params,
-        files=files, json=json_body, timeout=60,
+        files=files, data=payload, headers=headers, timeout=60,
     )
     r.raise_for_status()
     data = r.json()
