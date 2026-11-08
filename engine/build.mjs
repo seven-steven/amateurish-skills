@@ -17,6 +17,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { patchEngine } from "./local-patches.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REF = process.argv[2] || "v2.1.0";
@@ -34,19 +35,26 @@ run(`npm install --no-audit --no-fund --ignore-scripts github:doocs/md#${REF}`);
 fs.writeFileSync(path.join(tmp, "dompurify-shim.mjs"),
   `// pass-through sanitizer shim: input is authored by the skill's own user (trusted).
 export default { sanitize: html => html };\n`);
+fs.copyFileSync(path.join(HERE, "geek-black.theme.mjs"), path.join(tmp, "geek-black.theme.mjs"));
 fs.writeFileSync(path.join(tmp, "entry.mjs"),
   `export * from "md/packages/core/src/index.ts";
-export { themeMap, themeOptions } from "md/packages/shared/src/configs/theme.ts";\n` +
-  `import { registerGeekBlack } from ${JSON.stringify(pathToFileURL(path.join(HERE, "geek-black.theme.mjs")).href)};\n` +
-  `registerGeekBlack(themeMap, themeOptions);\n`);
+import { themeMap, themeOptions } from "md/packages/shared/src/configs/theme.ts";
+export { themeMap, themeOptions };
+import { registerGeekBlack } from "./geek-black.theme.mjs";
+registerGeekBlack(themeMap, themeOptions);
+`);
 
 run([
   "node_modules/.bin/esbuild entry.mjs --bundle --platform=node --format=esm",
   "--alias:@md/shared=node_modules/md/packages/shared/src/index.ts",
   "--alias:isomorphic-dompurify=./dompurify-shim.mjs",
   "--external:mermaid",
-  `--outfile=${path.join(HERE, "engine.mjs")}`,
+  `--outfile=${path.join(tmp, "engine.mjs")}`,
 ].join(" "));
+
+// Do not replace the checked-in bundle if an upstream change breaks a patch.
+fs.writeFileSync(path.join(HERE, "engine.mjs"),
+  patchEngine(fs.readFileSync(path.join(tmp, "engine.mjs"), "utf8")));
 
 const kb = Math.round(fs.statSync(path.join(HERE, "engine.mjs")).size / 1024);
 console.log(`built engine/engine.mjs (${kb} KB) from doocs/md#${REF}`);

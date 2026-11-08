@@ -1,130 +1,182 @@
 /**
- * geek-black — builtin theme, ported from a doocs/md "#nice" custom CSS.
- * Registered into themeMap as `geek-black` (see build.mjs / engine.mjs tail).
- * Self-contained: no imports; deep-merges over themeMap.default at registration.
+ * geek-black — port of the supplied #nice stylesheet.
+ * Headings retain their outer rule/rail and inner .content decoration rather
+ * than flattening both boxes into one. Registered by build.mjs into the bundle.
  */
+const sans = '"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif';
+const quoteSans = '-apple-system-font, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif';
+const accent = "rgb(239, 112, 96)";
 
-// geek-black overrides, translated from the original #nice stylesheet
 const overrides = {
   base: {
-    "--md-primary-color": "#212122"
+    "--md-primary-color": "#212122",
+    color: "#000000"
+  },
+  // Match the reference's plain, numbered code blocks (no macOS traffic lights).
+  renderOptions: {
+    isMacCodeBlock: false,
+    isShowLineNumber: true
   },
   block: {
-    // 段落
+    container: {
+      padding: "30px",
+      "box-sizing": "border-box"
+    },
     p: {
+      "box-sizing": "border-box",
+      margin: "10px 0",
       "margin-bottom": "16px",
-      "margin-top": "0",
+      padding: "8px 0",
+      "font-family": sans,
       "font-size": "15px",
+      "text-align": "start",
+      "white-space": "normal",
+      "text-size-adjust": "auto",
       "line-height": "1.75em",
       "letter-spacing": "normal",
-      "color": "#3e3e3e",
-      "font-family":
-        '"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif'
+      color: "#000000"
     },
-    // 一级标题：灰色小字 + 浅色下边线
     h1: {
-      "display": "block",
-      "text-align": "start",
-      "margin": "-0.46em 0 0.1em",
-      "padding": "5px 0",
+      display: "block",
+      margin: "-0.46em 0 0.1em",
+      padding: "0",
       "border-bottom": "2px solid rgb(198, 196, 196)",
-      "color": "rgb(160, 160, 160)",
-      "font-size": "13px",
-      "font-weight": "normal",
-      "line-height": "2"
-    },
-    // 二级标题：黑色圆角块 + 白字
-    h2: {
-      "display": "inline-block",
+      "box-sizing": "border-box",
       "text-align": "start",
-      "margin": "10px 0",
-      "padding": "0 30px",
-      "height": "40px",
+      "font-size": "13px"
+    },
+    h1_content: {
+      "padding-top": "5px",
+      "padding-bottom": "5px",
+      color: "rgb(160, 160, 160)",
+      "font-size": "13px",
+      "line-height": "2",
+      "box-sizing": "border-box"
+    },
+    h2: {
+      display: "block",
+      margin: "10px auto",
+      padding: "0",
+      height: "40px",
+      background: "none",
+      "background-color": "rgb(251, 251, 251)",
+      "border-bottom": "1px solid rgb(246, 246, 246)",
+      overflow: "hidden",
+      "box-sizing": "border-box",
+      "text-align": "start",
+      "font-size": "16px",
+      color: "#000000"
+    },
+    h2_content: {
+      "margin-left": "-10px",
+      display: "inline-block",
+      width: "auto",
+      height: "40px",
+      "background-color": "rgb(33, 33, 34)",
+      "border-bottom-right-radius": "100px",
+      color: "rgb(255, 255, 255)",
+      "padding-right": "30px",
+      "padding-left": "30px",
       "line-height": "40px",
-      "font-size": "16px",
-      "background": "#212122",
-      "color": "#ffffff",
-      "border-radius": "0 0 100px 0",
-      "box-shadow": "none"
+      "font-size": "16px"
     },
-    // 三级标题：顶部黑色粗线
     h3: {
-      "display": "inline-block",
+      display: "block",
+      margin: "20px auto 5px",
+      padding: "0",
       "border-left": "none",
-      "border-top": "2px solid #212122",
-      "border-radius": "0",
-      "padding": "6px 5px 0",
-      "margin": "20px 8px 5px 0",
+      "border-top": "1px solid rgb(221, 221, 221)",
+      "box-sizing": "border-box",
+      color: "#000000"
+    },
+    h3_content: {
+      "margin-top": "-1px",
+      padding: "6px 5px 0",
       "font-size": "17px",
-      "line-height": "1.1",
-      "color": "hsl(var(--foreground))"
+      "border-top": "2px solid rgb(33, 33, 34)",
+      display: "inline-block",
+      "line-height": "1.1"
     },
-    // 四级标题：同三级，略小
     h4: {
-      "display": "inline-block",
-      "border-top": "2px solid #212122",
-      "padding": "6px 5px 0",
-      "margin": "10px 8px -1px 0",
-      "font-size": "16px",
-      "line-height": "1.1",
-      "color": "hsl(var(--foreground))"
+      display: "block",
+      margin: "10px auto -1px",
+      padding: "0",
+      "border-top": "1px solid rgb(221, 221, 221)",
+      "box-sizing": "border-box",
+      color: "#000000"
     },
-    // 引用：灰色左边线 + 灰字
+    h4_content: {
+      "margin-top": "-1px",
+      padding: "6px 5px 0",
+      "font-size": "16px",
+      "border-top": "2px solid rgb(33, 33, 34)",
+      display: "inline-block",
+      "line-height": "1.1"
+    },
     blockquote: {
       "border-left": "4px solid rgb(221, 221, 221)",
       "border-radius": "0",
-      "background": "transparent",
-      "box-shadow": "none",
-      "margin": "1.2em 8px",
-      "padding": "1.2em 1em",
-      "color": "rgb(119, 119, 119)"
+      background: "#f4f4f4",
+      margin: "1.2em 0",
+      padding: "10px 1em",
+      color: "rgb(119, 119, 119)",
+      quotes: "none"
     },
     blockquote_p: {
-      "color": "rgb(119, 119, 119)",
+      margin: "0",
+      padding: "8px 0",
       "font-size": "15px",
-      "line-height": "1.75em"
+      "font-family": quoteSans,
+      color: "rgb(119, 119, 119)",
+      "line-height": "1.75em",
+      "letter-spacing": "normal"
+    },
+    code: {
+      "font-size": "14px"
+    },
+    code_pre: {
+      margin: "16px 0",
+      background: "#f8f8f8",
+      border: "1px solid #eeeeee",
+      "border-radius": "0",
+      "font-size": "13px"
+    },
+    hr: {
+      border: "none",
+      "border-top": "1px solid #000000",
+      height: "0",
+      margin: "10px 0",
+      transform: "none",
+      "-webkit-transform": "none"
     }
   },
   inline: {
-    // 列表项
     listitem: {
       "font-size": "15px",
-      "color": "#3e3e3e",
-      "font-family":
-        '"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif'
+      "font-family": sans,
+      color: "#000000"
     },
-    // 链接
-    link: {
-      "color": "rgb(239, 112, 96)",
-      "border-bottom": "1px solid rgb(239, 112, 96)"
-    },
-    // 行内代码
-    codespan: {
-      "color": "rgb(239, 112, 96)"
-    },
-    // 脚注
-    footnote: {
-      "color": "#ff3502"
-    }
+    link: { color: accent, "border-bottom": `1px solid ${accent}` },
+    wx_link: { color: accent, "border-bottom": `1px solid ${accent}` },
+    codespan: { color: accent },
+    // In particular, bold text inside the black h2 ribbon must remain white.
+    strong: { color: "inherit" },
+    footnote: { color: "#ff3502" }
   }
 };
 
-function isPlainObject(v) {
-  return v !== null && typeof v === "object" && !Array.isArray(v);
-}
-
 function deepMerge(base, over) {
-  if (!isPlainObject(base) || !isPlainObject(over)) return over;
+  if (base === null || over === null || typeof base !== "object" || typeof over !== "object") return over;
   const out = { ...base };
-  for (const [k, v] of Object.entries(over)) {
-    out[k] = k in out ? deepMerge(base[k], v) : v;
+  for (const [key, value] of Object.entries(over)) {
+    out[key] = key in out ? deepMerge(base[key], value) : value;
   }
   return out;
 }
 
 export function registerGeekBlack(themeMap, themeOptions) {
   themeMap["geek-black"] = deepMerge(themeMap.default, overrides);
-  if (!themeOptions.some((o) => o.value === "geek-black")) {
+  if (!themeOptions.some((option) => option.value === "geek-black")) {
     themeOptions.push({ label: "极客黑", value: "geek-black", desc: "" });
   }
 }

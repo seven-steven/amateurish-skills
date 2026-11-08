@@ -6165,7 +6165,8 @@ function customCssWithTemplate(jsonString, color, theme) {
   return newTheme;
 }
 function getStyleString(style) {
-  return Object.entries(style ?? {}).map(([key, value]) => `${key}: ${value}`).join(`; `);
+  const css = Object.entries(style ?? {}).map(([key, value]) => key + ": " + value).join("; ");
+  return css.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 // node_modules/md/packages/core/src/extensions/alert.ts
@@ -20492,7 +20493,15 @@ function initRenderer(opts) {
     heading({ tokens, depth }) {
       const text = this.parser.parseInline(tokens);
       const tag = `h${depth}`;
-      return styledContent(tag, text);
+      // Inline the h2 strong color rule from postProcessHtml as well.
+      const headingText = depth === 2
+        ? text.replace(/(<strong\b[^>]*style="[^"]*)"/g, '$1; color: inherit"')
+        : text;
+      const contentKey = tag + "_content";
+      const content = styleMapping[contentKey]
+        ? '<span class="content" ' + styles(contentKey) + '>' + headingText + '</span>'
+        : headingText;
+      return styledContent(tag, content);
     },
     paragraph({ tokens }) {
       const text = this.parser.parseInline(tokens);
@@ -20554,9 +20563,9 @@ function initRenderer(opts) {
         highlighted = highlighted.replace(/\t/g, `    `);
         highlighted = highlighted.replace(/\r\n/g, `<br/>`).replace(/\n/g, `<br/>`).replace(/(>[^<]+)|(^[^<]+)/g, (str) => str.replace(/\s/g, `&nbsp;`));
       }
-      const span = `<span class="mac-sign" style="padding: 10px 14px 0;">${macCodeSvg}</span>`;
-      const code = `<code class="language-${lang}" ${styles(`code`)}>${highlighted}</code>`;
-      return `<pre class="hljs code__pre" ${styles(`code_pre`)}>${span}${code}</pre>`;
+      const span = `<span class="mac-sign" style="display: ${opts.isMacCodeBlock ? "flex" : "none"}; padding: 10px 14px 0;">${macCodeSvg}</span>`;
+      const code = `<code class="language-${lang}" ${styles(`code`, `;display: block; white-space: ${opts.isShowLineNumber ? "normal" : "pre"}; padding: 0.5em 1em 1em; overflow-x: auto; text-indent: 0`)}>${highlighted}</code>`;
+      return `<pre class="hljs code__pre" ${styles(`code_pre`, `;padding: 0`)}>${span}${code}</pre>`;
     },
     codespan({ text }) {
       const escapedText = escapeHtml2(text);
@@ -21168,69 +21177,185 @@ var themeOptions = [
     desc: `@okooo5km`
   }
 ];
-// engine/geek-black.theme.mjs — builtin geek-black theme (registered post-bundle)
-var __geekBlackOverrides = {
+
+// geek-black.theme.mjs
+var sans = '"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif';
+var quoteSans = '-apple-system-font, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif';
+var accent = "rgb(239, 112, 96)";
+var overrides = {
   base: {
-    "--md-primary-color": `#212122`
+    "--md-primary-color": "#212122",
+    color: "#000000"
+  },
+  // Match the reference's plain, numbered code blocks (no macOS traffic lights).
+  renderOptions: {
+    isMacCodeBlock: false,
+    isShowLineNumber: true
   },
   block: {
+    container: {
+      padding: "30px",
+      "box-sizing": "border-box"
+    },
     p: {
-      "margin": "0 0 16px", "font-size": "15px", "line-height": "1.75em",
-      "letter-spacing": `normal`, "color": "#3e3e3e",
-      "font-family": `"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif`
+      "box-sizing": "border-box",
+      margin: "10px 0",
+      "margin-bottom": "16px",
+      padding: "8px 0",
+      "font-family": sans,
+      "font-size": "15px",
+      "text-align": "start",
+      "white-space": "normal",
+      "text-size-adjust": "auto",
+      "line-height": "1.75em",
+      "letter-spacing": "normal",
+      color: "#000000"
     },
     h1: {
-      "display": `block`, "text-align": `start`, "margin": "-0.46em 0 0.1em",
-      "padding": "5px 0", "border-bottom": "2px solid rgb(198, 196, 196)",
-      "color": "rgb(160, 160, 160)", "font-size": "13px", "font-weight": `normal`, "line-height": `2`
+      display: "block",
+      margin: "-0.46em 0 0.1em",
+      padding: "0",
+      "border-bottom": "2px solid rgb(198, 196, 196)",
+      "box-sizing": "border-box",
+      "text-align": "start",
+      "font-size": "13px"
+    },
+    h1_content: {
+      "padding-top": "5px",
+      "padding-bottom": "5px",
+      color: "rgb(160, 160, 160)",
+      "font-size": "13px",
+      "line-height": "2",
+      "box-sizing": "border-box"
     },
     h2: {
-      "display": `inline-block`, "text-align": `start`, "margin": "10px 0",
-      "padding": "0 30px", "height": "40px", "line-height": "40px",
-      "font-size": "16px", "background": `#212122`, "color": `#ffffff`,
-      "border-radius": "0 0 100px 0", "box-shadow": `none`
+      display: "block",
+      margin: "10px auto",
+      padding: "0",
+      height: "40px",
+      background: "none",
+      "background-color": "rgb(251, 251, 251)",
+      "border-bottom": "1px solid rgb(246, 246, 246)",
+      overflow: "hidden",
+      "box-sizing": "border-box",
+      "text-align": "start",
+      "font-size": "16px",
+      color: "#000000"
+    },
+    h2_content: {
+      "margin-left": "-10px",
+      display: "inline-block",
+      width: "auto",
+      height: "40px",
+      "background-color": "rgb(33, 33, 34)",
+      "border-bottom-right-radius": "100px",
+      color: "rgb(255, 255, 255)",
+      "padding-right": "30px",
+      "padding-left": "30px",
+      "line-height": "40px",
+      "font-size": "16px"
     },
     h3: {
-      "display": `inline-block`, "border-left": `none`, "border-top": "2px solid #212122",
-      "border-radius": `0`, "padding": "6px 5px 0", "margin": "20px 8px 5px 0",
-      "font-size": "17px", "line-height": `1.1`, "color": `hsl(var(--foreground))`
+      display: "block",
+      margin: "20px auto 5px",
+      padding: "0",
+      "border-left": "none",
+      "border-top": "1px solid rgb(221, 221, 221)",
+      "box-sizing": "border-box",
+      color: "#000000"
+    },
+    h3_content: {
+      "margin-top": "-1px",
+      padding: "6px 5px 0",
+      "font-size": "17px",
+      "border-top": "2px solid rgb(33, 33, 34)",
+      display: "inline-block",
+      "line-height": "1.1"
     },
     h4: {
-      "display": `inline-block`, "border-top": "2px solid #212122",
-      "padding": "6px 5px 0", "margin": "10px 8px -1px 0",
-      "font-size": "16px", "line-height": `1.1`, "color": `hsl(var(--foreground))`
+      display: "block",
+      margin: "10px auto -1px",
+      padding: "0",
+      "border-top": "1px solid rgb(221, 221, 221)",
+      "box-sizing": "border-box",
+      color: "#000000"
+    },
+    h4_content: {
+      "margin-top": "-1px",
+      padding: "6px 5px 0",
+      "font-size": "16px",
+      "border-top": "2px solid rgb(33, 33, 34)",
+      display: "inline-block",
+      "line-height": "1.1"
     },
     blockquote: {
-      "border-left": "4px solid rgb(221, 221, 221)", "border-radius": `0`,
-      "background": `transparent`, "box-shadow": `none`, "margin": "1.2em 8px",
-      "padding": "1.2em 1em", "color": "rgb(119, 119, 119)"
+      "border-left": "4px solid rgb(221, 221, 221)",
+      "border-radius": "0",
+      background: "#f4f4f4",
+      margin: "1.2em 0",
+      padding: "10px 1em",
+      color: "rgb(119, 119, 119)",
+      quotes: "none"
     },
     blockquote_p: {
-      "color": "rgb(119, 119, 119)", "font-size": "15px", "line-height": "1.75em"
+      margin: "0",
+      padding: "8px 0",
+      "font-size": "15px",
+      "font-family": quoteSans,
+      color: "rgb(119, 119, 119)",
+      "line-height": "1.75em",
+      "letter-spacing": "normal"
+    },
+    code: {
+      "font-size": "14px"
+    },
+    code_pre: {
+      margin: "16px 0",
+      background: "#f8f8f8",
+      border: "1px solid #eeeeee",
+      "border-radius": "0",
+      "font-size": "13px"
+    },
+    hr: {
+      border: "none",
+      "border-top": "1px solid #000000",
+      height: "0",
+      margin: "10px 0",
+      transform: "none",
+      "-webkit-transform": "none"
     }
   },
   inline: {
-    listitem: { "font-size": "15px", "color": "#3e3e3e", "font-family": `"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif` },
-    link: { "color": "rgb(239, 112, 96)", "border-bottom": "1px solid rgb(239, 112, 96)" },
-    wx_link: { "color": "rgb(239, 112, 96)" },
-    codespan: { "color": "rgb(239, 112, 96)" },
-    footnote: { "color": "#ff3502" }
+    listitem: {
+      "font-size": "15px",
+      "font-family": sans,
+      color: "#000000"
+    },
+    link: { color: accent, "border-bottom": `1px solid ${accent}` },
+    wx_link: { color: accent, "border-bottom": `1px solid ${accent}` },
+    codespan: { color: accent },
+    // In particular, bold text inside the black h2 ribbon must remain white.
+    strong: { color: "inherit" },
+    footnote: { color: "#ff3502" }
   }
 };
-function __isPlain(v) {
-  return v !== null && typeof v === "object" && !Array.isArray(v);
-}
-function __deepMerge(base, over) {
-  if (!__isPlain(base) || !__isPlain(over)) return over;
+function deepMerge(base, over) {
+  if (base === null || over === null || typeof base !== "object" || typeof over !== "object") return over;
   const out = { ...base };
-  for (const [k, v] of Object.entries(over)) out[k] = k in out ? __deepMerge(base[k], v) : v;
+  for (const [key, value] of Object.entries(over)) {
+    out[key] = key in out ? deepMerge(base[key], value) : value;
+  }
   return out;
 }
-themeMap["geek-black"] = __deepMerge(themeMap.default, __geekBlackOverrides);
-if (!themeOptions.some((o) => o.value === "geek-black")) {
-  themeOptions.push({ label: `\u6781\u5BA2\u9ED1`, value: "geek-black", desc: `` });
+function registerGeekBlack(themeMap2, themeOptions2) {
+  themeMap2["geek-black"] = deepMerge(themeMap2.default, overrides);
+  if (!themeOptions2.some((option) => option.value === "geek-black")) {
+    themeOptions2.push({ label: "\u6781\u5BA2\u9ED1", value: "geek-black", desc: "" });
+  }
 }
 
+// entry.mjs
+registerGeekBlack(themeMap, themeOptions);
 export {
   MDKatex,
   createSyntaxPattern,

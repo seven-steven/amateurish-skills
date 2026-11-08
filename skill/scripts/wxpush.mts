@@ -32,7 +32,12 @@ const IMAGE_CACHE = path.join(RUNTIME, "image-cache.json");
 const CONFIG = path.join(RUNTIME, "config.json");
 const THEMES_DIR = path.join(HERE, "..", "themes");
 
-type Theme = { base?: Record<string, string>; block?: Record<string, Record<string, string>>; inline?: Record<string, Record<string, string>> };
+type Theme = {
+  base?: Record<string, string>;
+  block?: Record<string, Record<string, string>>;
+  inline?: Record<string, Record<string, string>>;
+  renderOptions?: { isMacCodeBlock?: boolean; isShowLineNumber?: boolean };
+};
 type Config = { api_base?: string; author?: string; theme?: string; cover_dir?: string };
 
 function loadConfig(): Config {
@@ -100,9 +105,9 @@ function listThemes(): { name: string; source: string }[] {
   return out;
 }
 
-function loadTheme(name: string): unknown {
+function loadTheme(name: string): Theme {
   const builtins = builtinThemes();
-  if (builtins[name]) return builtins[name];
+  if (builtins[name]) return builtins[name] as Theme;
   const file = ["yaml", "yml"].map(e => path.join(THEMES_DIR, `${name}.${e}`)).find(fs.existsSync);
   if (!file) die(`theme not found: ${name} (see --list-themes)`);
   const spec = yaml.parse(fs.readFileSync(file, "utf8")) as { base_theme?: string } & Theme;
@@ -290,8 +295,9 @@ async function main() {
 
   if (cmd === "build") {
     const theme = flag("theme") || cfg.theme || "default";
+    const selectedTheme = loadTheme(theme);
     const renderer = initRenderer({
-      theme: loadTheme(theme),
+      theme: selectedTheme,
       fonts: `-apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif`,
       size: "15px",
       isUseIndent: false,
@@ -299,15 +305,17 @@ async function main() {
       legend: "alt-title",
       countStatus: false,
       citeStatus: true,
-      isMacCodeBlock: true,
-      isShowLineNumber: false,
+      isMacCodeBlock: selectedTheme.renderOptions?.isMacCodeBlock ?? true,
+      isShowLineNumber: selectedTheme.renderOptions?.isShowLineNumber ?? false,
     });
     const { html, readingTime } = renderMarkdown(body, renderer);
-    const full = postProcessHtml(html, readingTime, renderer);
-    void full;
+    // Preserve the container, references and other post-processing. The engine
+    // emits code layout inline; WeChat strips embedded stylesheets.
+    const full = postProcessHtml(html, readingTime, renderer)
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
     const dir = flag("out") ? path.resolve(flag("out")!) : runDir(notePath);
     fs.mkdirSync(dir, { recursive: true });
-    writeRun(dir, "article.html", html);
+    writeRun(dir, "article.html", full);
     writeRun(dir, "article.md", body);
     writeRun(dir, "meta.json", JSON.stringify({ theme, meta }, null, 2));
     console.log(`built: ${path.join(dir, "article.html")} (theme: ${theme})`);
