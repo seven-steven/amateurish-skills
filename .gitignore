@@ -1,5 +1,6 @@
 # runtime state (machine-local)
 skill/.bin/
+skill/config.json
 # engine build intermediates never land here; engine.mjs IS committed
 __pycache__/
 *.pyc
