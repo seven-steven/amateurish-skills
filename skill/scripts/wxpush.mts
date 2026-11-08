@@ -18,7 +18,7 @@ const HERE = import.meta.dirname;
   if (typeof (globalThis as any).require === "undefined") (globalThis as any).require = createRequire(import.meta.url);
   const ENGINE = path.join(HERE, "..", "..", "engine", "engine.mjs");
 if (!fs.existsSync(ENGINE)) die(`engine bundle missing: ${ENGINE} (run node engine/build.mjs)`);
-const { initRenderer, renderMarkdown, postProcessHtml, themeMap } = await import(
+const { initRenderer, renderMarkdown, postProcessHtml, inlineWechatStyles, themeMap } = await import(
   pathToFileURL(ENGINE)
 );
 function pathToFileURL(p: string): string {
@@ -309,10 +309,11 @@ async function main() {
       isShowLineNumber: selectedTheme.renderOptions?.isShowLineNumber ?? false,
     });
     const { html, readingTime } = renderMarkdown(body, renderer);
-    // Preserve the container, references and other post-processing. The engine
-    // emits code layout inline; WeChat strips embedded stylesheets.
-    const full = postProcessHtml(html, readingTime, renderer)
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
+    // Preserve the container/references and save the same concrete inline CSS
+    // for preview and push. WeChat strips stylesheets and mishandles custom
+    // property declarations, so resolve var() before removing their definitions.
+    const full = inlineWechatStyles(postProcessHtml(html, readingTime, renderer)
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ""));
     const dir = flag("out") ? path.resolve(flag("out")!) : runDir(notePath);
     fs.mkdirSync(dir, { recursive: true });
     writeRun(dir, "article.html", full);

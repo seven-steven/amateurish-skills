@@ -43,5 +43,10 @@ export function patchEngine(source) {
   source = replaceOnce(source,
     'return `<pre class="hljs code__pre" ${styles(`code_pre`)}>${span}${code}</pre>`;',
     'return `<pre class="hljs code__pre" ${styles(`code_pre`, `;padding: 0`)}>${span}${code}</pre>`;');
+  // The reference editor mutes line numbers with host CSS. Drafts have no
+  // stylesheet, so the gutter must not inherit the code's foreground color.
+  source = replaceOnce(source,
+    '<section class="line-numbers" style="${lineNumberColumnStyles}">',
+    '<section class="line-numbers" style="${lineNumberColumnStyles}color:#b3b3b3;">');
   return source;
 }

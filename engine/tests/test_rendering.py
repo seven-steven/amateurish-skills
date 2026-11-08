@@ -64,7 +64,7 @@ class Document(HTMLParser):
 
 
 class RenderingTests(unittest.TestCase):
-    def build(self, theme, custom_theme=None):
+    def build(self, theme, custom_theme=None, note_text=NOTE):
         with tempfile.TemporaryDirectory(prefix="wxmp-render-test-") as directory:
             directory = Path(directory)
             project = ROOT
@@ -79,7 +79,7 @@ class RenderingTests(unittest.TestCase):
                 (project / f"skill/themes/{theme}.yaml").write_text(custom_theme, encoding="utf-8")
             note = directory / "note.md"
             out = directory / "out"
-            note.write_text(NOTE, encoding="utf-8")
+            note.write_text(note_text, encoding="utf-8")
             result = subprocess.run(
                 ["node", str(project / "skill/scripts/wxpush.mts"), "build", str(note),
                  "--theme", theme, "--out", str(out)],
@@ -107,6 +107,59 @@ class RenderingTests(unittest.TestCase):
                 self.assertIn("font-size", document.first("h2").style)
                 bold = next(e for e in document.elements if e.tag == "strong" and e.text == "重点")
                 self.assertEqual(bold.style["color"], "inherit")
+
+    def test_built_styles_do_not_trigger_wechat_custom_property_filter(self):
+        # A real draft/get capture reduced the loss of heading/paragraph styles
+        # to `--md-primary-color: #000000; font-size: 1.2em`. WeChat discards
+        # declarations following the custom property, even though browsers do not.
+        for theme in ["default", "grace", "simple", "geek-black"]:
+            with self.subTest(theme=theme):
+                document = Document(self.build(theme))
+                for element in document.elements:
+                    self.assertFalse(
+                        any(key.startswith("--") for key in element.style),
+                        (theme, element.tag, "custom CSS properties cannot be sent to WeChat"),
+                    )
+                    for value in element.style.values():
+                        self.assertNotIn("var(", value, (theme, element.tag, value))
+                if theme != "geek-black":
+                    self.assertEqual(document.first("h2").style["background"], "#000000")
+                    self.assertEqual(document.first("h3").style["border-left"],
+                                     "3px solid #000000" if theme == "default" else "4px solid #000000")
+                else:
+                    numbers = next(e for e in document.elements if e.attrs.get("class") == "line-numbers")
+                    self.assertEqual(numbers.style["background"], "transparent")
+
+    def test_variable_materialization_preserves_custom_themes_scopes_and_article_text(self):
+        custom_theme = """base_theme: default
+base:
+  "--accent": "#123456"
+  "--md-primary-color": "var(--accent)"
+block:
+  h2:
+    "--accent": "#654321"
+  p:
+    color: "var(--missing, rgb(12, 34, 56))"
+"""
+        note = '''## 局部主题变量
+
+### 基础主题变量
+
+正文中的 `var(--accent)` 不应该被替换。
+
+<section style="--local: #abcdef; color: var(--local)">
+<span style="color: var(--missing, var(--local)); font-family: &quot;A;B&amp;C&quot;">继承变量</span>
+</section>
+'''
+        document = Document(self.build("variables", custom_theme, note))
+        self.assertEqual(document.first("h2").style["background"], "#654321")
+        self.assertEqual(document.first("h3").style["border-left"], "3px solid #123456")
+        self.assertEqual(document.first("p").style["color"], "rgb(12, 34, 56)")
+        self.assertEqual(document.first("code").text, "var(--accent)")
+        span = document.first("span")
+        self.assertEqual(span.style["color"], "#abcdef")
+        self.assertIn('font-family: "A;B&C"', span.attrs["style"])
+        self.assertEqual(set(span.attrs), {"style"})
 
     def test_geek_black_has_two_layer_heading_and_full_width_rail(self):
         document = Document(self.build("geek-black"))

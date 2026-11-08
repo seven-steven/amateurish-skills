@@ -132,7 +132,8 @@ const overrides = {
       "letter-spacing": "normal"
     },
     code: {
-      "font-size": "14px"
+      "font-size": "14px",
+      color: "#333333"
     },
     code_pre: {
       margin: "16px 0",

@@ -29,15 +29,17 @@ const run = (cmd) => execSync(cmd, { cwd: tmp, stdio: "inherit" });
 
 console.log(`# engine build: doocs/md#${REF}`);
 run("npm init -y");
-run("npm install --no-audit --no-fund --ignore-scripts esbuild marked fflate front-matter reading-time es-toolkit highlight.js csstype");
+run("npm install --no-audit --no-fund --ignore-scripts esbuild marked fflate front-matter reading-time es-toolkit highlight.js csstype parse5 postcss postcss-value-parser");
 run(`npm install --no-audit --no-fund --ignore-scripts github:doocs/md#${REF}`);
 
 fs.writeFileSync(path.join(tmp, "dompurify-shim.mjs"),
   `// pass-through sanitizer shim: input is authored by the skill's own user (trusted).
 export default { sanitize: html => html };\n`);
 fs.copyFileSync(path.join(HERE, "geek-black.theme.mjs"), path.join(tmp, "geek-black.theme.mjs"));
+fs.copyFileSync(path.join(HERE, "wechat-styles.mjs"), path.join(tmp, "wechat-styles.mjs"));
 fs.writeFileSync(path.join(tmp, "entry.mjs"),
   `export * from "md/packages/core/src/index.ts";
+export { inlineWechatStyles } from "./wechat-styles.mjs";
 import { themeMap, themeOptions } from "md/packages/shared/src/configs/theme.ts";
 export { themeMap, themeOptions };
 import { registerGeekBlack } from "./geek-black.theme.mjs";

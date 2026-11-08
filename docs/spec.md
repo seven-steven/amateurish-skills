@@ -53,16 +53,17 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 - `renderOptions` 可选:`isMacCodeBlock`(代码块交通灯)、`isShowLineNumber`(行号)。与主题一起继承,未配置时沿用 CLI 默认值。
 - 合并语义:**深合并**——用户样式递归覆盖到基础主题上,只写要改的属性。
 - 发现机制:`build --list-themes` 列出内置 default、grace、simple、geek-black + themes/ 目录下全部 YAML。
-- geek-black 真源为 `engine/geek-black.theme.mjs`,保留原 `#nice` CSS 的双层标题,并补齐参考效果依赖的基础间距、浅灰引用和代码块背景。
+- geek-black 真源为 `engine/geek-black.theme.mjs`,保留原 `#nice` CSS 的双层标题,并补齐参考效果依赖的基础间距、浅灰引用和代码块背景;代码文字为深灰,行号独立内联为浅灰,不依赖参考站点的样式表。
 - 引擎内置主题随 engine bundle 分发(不依赖 node_modules)。
 
 ## 6. Engine 设计
 
-- `engine/build.mjs`:npm 安装 `github:doocs/md#v2.x`,esbuild 打包 `@md/core`(含 shared 主题表,导出 `themeMap`)为单文件 ESM `engine/engine.mjs`(约 572KB),提交入库。
+- `engine/build.mjs`:npm 安装 `github:doocs/md#v2.x`,esbuild 打包 `@md/core`(含 shared 主题表,导出 `themeMap`)为单文件 ESM `engine/engine.mjs`(含微信输出兼容层约 1.1MB),提交入库。
 - 运行时零构建:wxpush.mts 直接 import 相对路径的 bundle;安装 skill 不需要 npm install。
 - 构建入口注册本地内置主题,再由 `engine/local-patches.mjs` 对 bundle 应用受校验的补丁:HTML 样式属性转义、可选双层标题、代码布局内联。补丁不匹配时中止,不覆盖已有产物。
 - CLI 保存 `postProcessHtml` 的结果(包含容器和引用链接),去掉微信不保留的 `<style>`;排版所需规则必须内联。
-- 升级引擎 = 改版本号重跑构建脚本,重新提交产物。主题与补丁改动也必须重建,不可只手改 bundle。
+- 保存前经 `engine/wechat-styles.mjs` 的 `inlineWechatStyles` 输出兼容层:用 HTML/CSS 解析器按元素作用域展开 `var(...)`(含继承、局部变量与回退),再移除 `--...` 自定义属性声明。真实草稿最小复现表明,微信会丢弃自定义属性之后的普通样式;仅浏览器预览正常不足以验证。preview/upload/push 必须共用这一产物,不能只在发送时修补。解析器一起打包进 engine,不增加 CLI 运行时依赖。
+- 升级引擎 = 改版本号重跑构建脚本,重新提交产物。主题、补丁与微信输出兼容层改动也必须重建,不可只手改 bundle。
 - 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 在本地开发时手动运行两者,不配置 GitHub Actions 自动测试。安装和覆盖范围见 [engine/tests/README.md](../engine/tests/README.md)。
 - 归属:引擎源自 doocs/md(Apache-2.0),见 `engine/ATTRIBUTION.md`。
 

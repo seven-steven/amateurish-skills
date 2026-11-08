@@ -106,6 +106,12 @@ test("long numbered code scrolls inside its gray box without widening the articl
   expect((await pre.boundingBox()).height).toBeLessThan(150);
 });
 
+test("geek-black code uses dark gray text and muted line numbers like the reference", async ({ page }) => {
+  await openArticle(page);
+  await expect(page.locator("pre code")).toHaveCSS("color", "rgb(51, 51, 51)");
+  await expect(page.locator("pre .line-numbers")).toHaveCSS("color", "rgb(179, 179, 179)");
+});
+
 test("saved article keeps its padded container and appended references", async ({ page }) => {
   await openArticle(page);
   const container = page.locator("body > section");
