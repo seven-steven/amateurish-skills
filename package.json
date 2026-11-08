@@ -1,5 +1,13 @@
 {
   "name": "wxmp-publisher",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:engine && npm run test:browser",
+    "test:engine": "node --test engine/tests/*.test.mjs && python3 -m unittest discover -s engine/tests -v",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0"
+  }
 }

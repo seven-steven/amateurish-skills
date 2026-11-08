@@ -48,16 +48,22 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 ## 5. 主题系统(完整)
 
 - 主题 = `skill/themes/<name>.yaml`,文件名即主题名。
-- 结构:`base_theme`(继承 default/grace/simple 之一,可省略,默认 default)+ `base`/`block`/`inline` 三段 CSS 属性映射。
+- 结构:`base_theme`(可继承 default/grace/simple/geek-black)+ `base`/`block`/`inline` 三段 CSS 属性映射。
+- `block.h1_content` 至 `block.h6_content` 可选:为标题增加独立的 `<span class="content">`,支持外层通栏背景/细线与内层文字装饰;未配置时保持原来的单层标题。
+- `renderOptions` 可选:`isMacCodeBlock`(代码块交通灯)、`isShowLineNumber`(行号)。与主题一起继承,未配置时沿用 CLI 默认值。
 - 合并语义:**深合并**——用户样式递归覆盖到基础主题上,只写要改的属性。
-- 发现机制:`build --list-themes` 列出内置三套 + themes/ 目录下全部 YAML。
+- 发现机制:`build --list-themes` 列出内置 default、grace、simple、geek-black + themes/ 目录下全部 YAML。
+- geek-black 真源为 `engine/geek-black.theme.mjs`,保留原 `#nice` CSS 的双层标题,并补齐参考效果依赖的基础间距、浅灰引用和代码块背景。
 - 引擎内置主题随 engine bundle 分发(不依赖 node_modules)。
 
 ## 6. Engine 设计
 
-- `engine/build.mjs`:npm 安装 `github:doocs/md#v2.x`,esbuild 打包 `@md/core`(含 shared 主题表,导出 `themeMap`)为单文件 ESM `engine/engine.mjs`(约 50KB),提交入库。
+- `engine/build.mjs`:npm 安装 `github:doocs/md#v2.x`,esbuild 打包 `@md/core`(含 shared 主题表,导出 `themeMap`)为单文件 ESM `engine/engine.mjs`(约 572KB),提交入库。
 - 运行时零构建:wxpush.mts 直接 import 相对路径的 bundle;安装 skill 不需要 npm install。
-- 升级引擎 = 改版本号重跑构建脚本,重新提交产物。
+- 构建入口注册本地内置主题,再由 `engine/local-patches.mjs` 对 bundle 应用受校验的补丁:HTML 样式属性转义、可选双层标题、代码布局内联。补丁不匹配时中止,不覆盖已有产物。
+- CLI 保存 `postProcessHtml` 的结果(包含容器和引用链接),去掉微信不保留的 `<style>`;排版所需规则必须内联。
+- 升级引擎 = 改版本号重跑构建脚本,重新提交产物。主题与补丁改动也必须重建,不可只手改 bundle。
+- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 运行两者,相关 push/PR 由 GitHub Actions 自动检查。安装和覆盖范围见 [engine/tests/README.md](../engine/tests/README.md)。
 - 归属:引擎源自 doocs/md(Apache-2.0),见 `engine/ATTRIBUTION.md`。
 
 ## 7. Server 设计
