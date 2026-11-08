@@ -5,8 +5,9 @@ Runs on the whitelisted public server; holds APP_SECRET. See docs/security.md.
 
 Endpoints:
   GET  /health        -> {"ok": true}           (no auth)
-  PUT  /publish       -> create draft           (Bearer auth)
+  PUT  /publish        -> create draft           (Bearer auth)
   PUT  /publish/img   -> upload body image      (Bearer auth)
+  PUT  /publish/update -> update existing draft (Bearer auth)
 
 Security: bearer auth (constant-time), 12MB body cap, image type/size checks,
 in-process sliding-window rate limit. Binds 127.0.0.1 behind a TLS reverse proxy.
@@ -162,49 +163,98 @@ def publish_img():
     return jsonify({"url": data["url"]})
 
 
-@app.put("/publish")
-def publish():
-    body = request.get_json(silent=True)
-    if not isinstance(body, dict):
-        return jsonify({"error": "invalid JSON body"}), 400
+def _validate_article_body(body: dict) -> tuple[str, str, str, bytes, str]:
+    """Validate and unpack the shared create/update payload.
+
+    Returns (title, content, digest, cover_bytes, cover_mime).
+    """
     for k in ("title", "content", "cover_base64"):
         if not body.get(k):
-            return jsonify({"error": f"missing field: {k}"}), 400
+            raise ValueError(f"missing field: {k}")
     if len(body["title"]) > 64:
-        return jsonify({"error": "title exceeds 64 chars"}), 400
+        raise ValueError("title exceeds 64 chars")
     digest = body.get("digest", "")
     if len(digest) > 120:
-        return jsonify({"error": "digest exceeds 120 chars"}), 400
+        raise ValueError("digest exceeds 120 chars")
 
     try:
         header, b64 = body["cover_base64"].split(",", 1)
         mime = header.split(":", 1)[1].split(";", 1)[0]
         cover = base64.b64decode(b64, validate=True)
     except (ValueError, IndexError):
-        return jsonify({"error": "invalid cover_base64"}), 400
+        raise ValueError("invalid cover_base64")
     if len(cover) > 2 * 1024 * 1024:
-        return jsonify({"error": "cover exceeds 2MB"}), 400
+        raise ValueError("cover exceeds 2MB")
+    return body["title"], body["content"], digest, cover, mime
+
+
+def _build_article(body: dict, title: str, content: str, digest: str, cover: bytes, mime: str) -> dict:
+    """Upload cover as permanent material and build the article payload."""
+    mat = _wx_post("/cgi-bin/material/add_material", files={
+        "media": ("cover." + mime.split("/")[1], io.BytesIO(cover), mime),
+    })
+    return {
+        "title": title,
+        "author": body.get("author", ""),
+        "digest": digest,
+        "content": content,
+        "content_source_url": body.get("content_source_url", ""),
+        "thumb_media_id": mat["media_id"],
+        "need_open_comment": 0,
+        "only_fans_can_comment": 0,
+    }
+
+
+@app.put("/publish")
+def publish():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": "invalid JSON body"}), 400
+    try:
+        title, content, digest, cover, mime = _validate_article_body(body)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
     try:
-        mat = _wx_post("/cgi-bin/material/add_material", files={
-            "media": ("cover." + mime.split("/")[1], io.BytesIO(cover), mime),
-        })
-        article = {
-            "title": body["title"],
-            "author": body.get("author", ""),
-            "digest": digest,
-            "content": body["content"],
-            "content_source_url": body.get("content_source_url", ""),
-            "thumb_media_id": mat["media_id"],
-            "need_open_comment": 0,
-            "only_fans_can_comment": 0,
-        }
+        article = _build_article(body, title, content, digest, cover, mime)
         draft = _wx_post("/cgi-bin/draft/add", json_body={"articles": [article]})
     except requests.RequestException:
         LOG.exception("publish failed")
         return jsonify({"error": "wechat api unreachable"}), 502
     LOG.info("draft created: %s", draft["media_id"])
     return jsonify({"media_id": draft["media_id"]})
+
+
+@app.put("/publish/update")
+def publish_update():
+    """Update the first article of an existing draft (draft/update, index 0).
+
+    WeChat replaces the whole article: title/content/cover are always sent.
+    """
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": "invalid JSON body"}), 400
+    if not body.get("media_id"):
+        return jsonify({"error": "missing field: media_id"}), 400
+    if not isinstance(body.get("index", 0), int) or body.get("index", 0) < 0:
+        return jsonify({"error": "index must be a non-negative int"}), 400
+    try:
+        title, content, digest, cover, mime = _validate_article_body(body)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    try:
+        article = _build_article(body, title, content, digest, cover, mime)
+        _wx_post("/cgi-bin/draft/update", json_body={
+            "media_id": body["media_id"],
+            "index": body.get("index", 0),
+            "articles": article,
+        })
+    except requests.RequestException:
+        LOG.exception("draft update failed")
+        return jsonify({"error": "wechat api unreachable"}), 502
+    LOG.info("draft updated: %s", body["media_id"])
+    return jsonify({"ok": True, "media_id": body["media_id"]})
 
 
 if __name__ == "__main__":

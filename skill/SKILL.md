@@ -40,6 +40,8 @@ Done when: the user confirms the rendered article.
 
 `push` with title/digest/author/source-url. Wechat rejects the whole draft on oversize title/digest or a broken cover — the tool validates first; fix and re-push on failure.
 
+If the user is unhappy with an already-pushed draft and wants the same draft updated in place (not a new one), run `push --update` after re-running `build` + `upload`; it reuses the recorded `media_id` (`.bin/drafts.json`, or `--media-id` explicitly). By default `push` always creates a new draft — only update when the user asks for it.
+
 Done when: `push` prints a `media_id`.
 
 ### 5. Close

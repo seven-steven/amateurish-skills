@@ -10,12 +10,17 @@ Env: `WXMP_API_BASE`(token 服务地址,如 `https://wx.example.com`)必需;`WXM
 - `themes` — 列出全部主题(内置 + `themes/` 自定义,带 `*` 标记)。
 - `build <note.md> [--theme <name>] [--out <dir>]` — markdown → 内联样式 HTML,产出 `.bin/output/<slug>-<时间戳>/`(`latest` 软链指向它)。
 - `upload <note.md>` — 上传笔记内全部图片到微信 CDN(`PUT <base>/publish/img`),重写 run dir 里的 md/html,哈希缓存于 `.bin/image-cache.json`,幂等可重试。
-- `push <note.md> --title <t> [--digest <d>] [--author <a>] [--source-url <u>]` — 前提 build+upload 已完成:上传封面素材、创建草稿。打印 `media_id`。
+- `push <note.md> --title <t> [--digest <d>] [--author <a>] [--source-url <u>]` — 前提 build+upload 已完成:上传封面素材、创建草稿。打印 `media_id`。默认总是新建草稿。
+- `push <note.md> --update [--media-id <id>]` — 更新已有草稿而不是新建:调 `PUT <base>/publish/update`(微信 `draft/update`,整篇替换,media_id 不变)。`--media-id` 缺省用 `.bin/drafts.json` 里本笔记上次的 media_id;换设备或缓存丢失时手动传。更新前校验 run dir 产物不早于笔记 mtime,过期则报错提示先 build/upload。
 - `preview <note.md> [--port 8099] [--watch]` — 本地静态服务器打开渲染结果;`--watch` 时监听 run dir 产物变化,浏览器自动刷新(upload 重写后的 html 即真实 CDN 图预览)。Ctrl-C 退出。
 
 ## Config `.bin/config.json`
 
 `{"api_base": "...", "author": "...", "theme": "default", "cover_dir": "..."}` — `api_base` 必填(env `WXMP_API_BASE` 可覆盖)。
+
+## Draft registry `.bin/drafts.json`
+
+`{ "<abs note path>": "<media_id>" }` — 每次 push 成功后自动回写,`push --update` 默认用它定位要更新的草稿。机器本地状态,丢失后可用 `--media-id` 手动指定。
 
 ## Themes
 

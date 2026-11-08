@@ -179,22 +179,35 @@ function collectImages(body: string): string[] {
 }
 
 // ---------- draft ----------
-async function pushDraft(opts: { title: string; html: string; digest?: string; author?: string; cover: string; sourceUrl?: string }) {
+async function pushDraft(opts: { title: string; html: string; digest?: string; author?: string; cover: string; sourceUrl?: string; mediaId?: string }) {
   const coverData = await fetchBytes(opts.cover, process.cwd());
   if (coverData.bytes.length > 2 * 1024 * 1024) die(`cover > 2MB: ${opts.cover}`);
   const coverBase64 = `data:${coverData.mime};base64,${coverData.bytes.toString("base64")}`;
-  const res = await fetch(`${apiBase()}/publish`, {
+  const update = Boolean(opts.mediaId);
+  const res = await fetch(`${apiBase()}${update ? "/publish/update" : "/publish"}`, {
     method: "PUT",
     headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({
+      ...(update ? { media_id: opts.mediaId } : {}),
       title: opts.title, content: opts.html, digest: opts.digest || "",
       author: opts.author || "", cover_base64: coverBase64,
       content_source_url: opts.sourceUrl || "",
     }),
   });
   const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-  if (!res.ok || !data.media_id) die(`draft create failed (${res.status}): ${data.error ?? "unknown"}`);
+  if (!res.ok || !(data.media_id)) die(`draft ${update ? "update" : "create"} failed (${res.status}): ${data.error ?? "unknown"}`);
   return data.media_id as string;
+}
+
+// ---------- draft registry: note path -> media_id of its draft ----------
+const DRAFTS = path.join(RUNTIME, "drafts.json");
+type Drafts = Record<string, string>;
+function loadDrafts(): Drafts {
+  try { return JSON.parse(fs.readFileSync(DRAFTS, "utf8")); } catch { return {}; }
+}
+function saveDrafts(d: Drafts) {
+  fs.mkdirSync(RUNTIME, { recursive: true });
+  fs.writeFileSync(DRAFTS, JSON.stringify(d, null, 2));
 }
 
 // ---------- preview ----------
@@ -244,6 +257,7 @@ async function main() {
     const i = args.indexOf(`--${name}`);
     return i >= 0 ? args[i + 1] : undefined;
   };
+  const hasFlag = (name: string): boolean => args.includes(`--${name}`);
 
   if (cmd === "doctor") {
     let ok = true;
@@ -333,6 +347,18 @@ async function main() {
   }
 
   if (cmd === "push") {
+    const update = hasFlag("update");
+    const manualMediaId = flag("media-id");
+    const drafts = loadDrafts();
+    const noteKey = notePath;
+    if (update && !manualMediaId && !drafts[noteKey])
+      die("--update but no media_id on record for this note: push first, or pass --media-id <id>");
+    // freshness: the build must not predate the note (avoid overwriting a draft with stale HTML)
+    if (update) {
+      const htmlPath = path.join(run, "article.html");
+      if (fs.statSync(notePath).mtimeMs > fs.statSync(htmlPath).mtimeMs)
+        die("build is stale: note changed since last build — run build (and upload) first");
+    }
     const title = flag("title") || meta.title || body.match(/^#\s+(.+)$/m)?.[1];
     if (!title) die("no title (front-matter wechat.title, --title, or an H1)");
     if (title.length > 64) die(`title ${title.length} chars > 64`);
@@ -359,11 +385,17 @@ async function main() {
     if (!cover || !fs.existsSync(cover)) die("no cover: set front-matter wechat.cover or drop one in cover_dir");
 
     const mediaId = await pushDraft({
+      ...(update ? { mediaId: manualMediaId || drafts[noteKey] } : {}),
       title, html, digest,
       author: flag("author") || meta.author || cfg.author || "",
       cover, sourceUrl: flag("source-url") || meta.source_url,
     });
-    console.log(`draft created: media_id=${mediaId}`);
+    drafts[noteKey] = mediaId;
+    saveDrafts(drafts);
+    console.log(update
+      ? `draft updated: media_id=${mediaId}`
+      : `draft created: media_id=${mediaId}`);
+    if (!update) console.log("to update this draft in place later: push --update");
     console.log("next: open the Wechat admin, check the draft, publish manually.");
     return;
   }

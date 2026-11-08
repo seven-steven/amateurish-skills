@@ -43,6 +43,7 @@ class PublishEncodingTests(unittest.TestCase):
         replies = {
             "/cgi-bin/material/add_material": {"media_id": "test-cover-id"},
             "/cgi-bin/draft/add": {"media_id": "test-draft-id"},
+            "/cgi-bin/draft/update": {"errcode": 0, "errmsg": "ok"},
             "/cgi-bin/media/uploadimg": {"url": "https://example.com/image.png"},
         }
         path = prepared.path_url.split("?")[0]
@@ -99,6 +100,37 @@ class PublishEncodingTests(unittest.TestCase):
         self.assertTrue(cover.headers["Content-Type"].startswith("multipart/form-data; boundary="))
         self.assertIn(b'name="media"; filename="cover.png"', cover.body)
         self.assertIn(b"Content-Type: image/png\r\n\r\nimage\r\n", cover.body)
+
+    def _publish_update(self, payload=None):
+        response = server.app.test_client().put(
+            "/publish/update", json=payload or {**self.payload, "media_id": "test-draft-id"},
+            headers={"Authorization": "Bearer test-api-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"ok": True, "media_id": "test-draft-id"})
+        self.assertEqual(len(self.outgoing), 2)
+        update = self.outgoing[1]
+        self.assertEqual(update.path_url.split("?")[0], "/cgi-bin/draft/update")
+        return update
+
+    def test_draft_update_sends_media_id_index_and_article(self):
+        update = self._publish_update()
+        body = json.loads(update.body)
+        self.assertEqual(body["media_id"], "test-draft-id")
+        self.assertEqual(body["index"], 0)
+        article = body["articles"]
+        self.assertEqual(article["title"], self.payload["title"])
+        self.assertEqual(article["content"], self.payload["content"])
+        self.assertEqual(article["thumb_media_id"], "test-cover-id")
+        self.assertEqual(article["digest"], self.payload["digest"])
+
+    def test_draft_update_rejects_missing_media_id(self):
+        response = server.app.test_client().put(
+            "/publish/update", json=self.payload,
+            headers={"Authorization": "Bearer test-api-token"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("media_id", response.get_json()["error"])
 
     def test_body_image_upload_remains_multipart(self):
         response = server.app.test_client().put(
