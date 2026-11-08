@@ -21168,6 +21168,69 @@ var themeOptions = [
     desc: `@okooo5km`
   }
 ];
+// engine/geek-black.theme.mjs — builtin geek-black theme (registered post-bundle)
+var __geekBlackOverrides = {
+  base: {
+    "--md-primary-color": `#212122`
+  },
+  block: {
+    p: {
+      "margin": "0 0 16px", "font-size": "15px", "line-height": "1.75em",
+      "letter-spacing": `normal`, "color": "#3e3e3e",
+      "font-family": `"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif`
+    },
+    h1: {
+      "display": `block`, "text-align": `start`, "margin": "-0.46em 0 0.1em",
+      "padding": "5px 0", "border-bottom": "2px solid rgb(198, 196, 196)",
+      "color": "rgb(160, 160, 160)", "font-size": "13px", "font-weight": `normal`, "line-height": `2`
+    },
+    h2: {
+      "display": `inline-block`, "text-align": `start`, "margin": "10px 0",
+      "padding": "0 30px", "height": "40px", "line-height": "40px",
+      "font-size": "16px", "background": `#212122`, "color": `#ffffff`,
+      "border-radius": "0 0 100px 0", "box-shadow": `none`
+    },
+    h3: {
+      "display": `inline-block`, "border-left": `none`, "border-top": "2px solid #212122",
+      "border-radius": `0`, "padding": "6px 5px 0", "margin": "20px 8px 5px 0",
+      "font-size": "17px", "line-height": `1.1`, "color": `hsl(var(--foreground))`
+    },
+    h4: {
+      "display": `inline-block`, "border-top": "2px solid #212122",
+      "padding": "6px 5px 0", "margin": "10px 8px -1px 0",
+      "font-size": "16px", "line-height": `1.1`, "color": `hsl(var(--foreground))`
+    },
+    blockquote: {
+      "border-left": "4px solid rgb(221, 221, 221)", "border-radius": `0`,
+      "background": `transparent`, "box-shadow": `none`, "margin": "1.2em 8px",
+      "padding": "1.2em 1em", "color": "rgb(119, 119, 119)"
+    },
+    blockquote_p: {
+      "color": "rgb(119, 119, 119)", "font-size": "15px", "line-height": "1.75em"
+    }
+  },
+  inline: {
+    listitem: { "font-size": "15px", "color": "#3e3e3e", "font-family": `"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif` },
+    link: { "color": "rgb(239, 112, 96)", "border-bottom": "1px solid rgb(239, 112, 96)" },
+    wx_link: { "color": "rgb(239, 112, 96)" },
+    codespan: { "color": "rgb(239, 112, 96)" },
+    footnote: { "color": "#ff3502" }
+  }
+};
+function __isPlain(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+function __deepMerge(base, over) {
+  if (!__isPlain(base) || !__isPlain(over)) return over;
+  const out = { ...base };
+  for (const [k, v] of Object.entries(over)) out[k] = k in out ? __deepMerge(base[k], v) : v;
+  return out;
+}
+themeMap["geek-black"] = __deepMerge(themeMap.default, __geekBlackOverrides);
+if (!themeOptions.some((o) => o.value === "geek-black")) {
+  themeOptions.push({ label: `\u6781\u5BA2\u9ED1`, value: "geek-black", desc: `` });
+}
+
 export {
   MDKatex,
   createSyntaxPattern,

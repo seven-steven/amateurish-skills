@@ -36,7 +36,9 @@ fs.writeFileSync(path.join(tmp, "dompurify-shim.mjs"),
 export default { sanitize: html => html };\n`);
 fs.writeFileSync(path.join(tmp, "entry.mjs"),
   `export * from "md/packages/core/src/index.ts";
-export { themeMap, themeOptions } from "md/packages/shared/src/configs/theme.ts";\n`);
+export { themeMap, themeOptions } from "md/packages/shared/src/configs/theme.ts";\n` +
+  `import { registerGeekBlack } from ${JSON.stringify(pathToFileURL(path.join(HERE, "geek-black.theme.mjs")).href)};\n` +
+  `registerGeekBlack(themeMap, themeOptions);\n`);
 
 run([
   "node_modules/.bin/esbuild entry.mjs --bundle --platform=node --format=esm",
