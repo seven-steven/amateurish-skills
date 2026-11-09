@@ -4,11 +4,14 @@ from __future__ import annotations
 import io
 import json
 import os
+import sys
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 with patch.dict(os.environ, {
     "WX_APP_ID": "test-app-id",
     "WX_APP_SECRET": "test-app-secret",
