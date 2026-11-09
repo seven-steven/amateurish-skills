@@ -84,7 +84,7 @@ class LayoutIntegrityTests(unittest.TestCase):
                 wired.add((r.parent / d).relative_to(ROOT).as_posix())
             wired.update(re.findall(r"discover -s ([\w./-]+)", r.read_text(encoding="utf-8")))
         test_dirs = {p.parent.relative_to(ROOT).as_posix()
-                     for p in ROOT.glob("**/test_*.py") if "node_modules" not in p.parts}
+                     for p in ROOT.glob("**/test_*.py") if "node_modules" not in p.parts and ".venv" not in p.parts}
         self.assertTrue(test_dirs, "sanity: no python tests found")
         for d in sorted(test_dirs):
             self.assertIn(d, wired, f"test dir '{d}' is not run by any npm script or runner")
