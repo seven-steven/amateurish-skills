@@ -7,7 +7,7 @@
 ## 安装
 
 ```bash
-npx skills add seven-steven/skills --skill publish-to-wxmp
+npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp
 ```
 
 要求 Node ≥ 22(仅 `npx tsx` 按需下载,无需 npm install)。

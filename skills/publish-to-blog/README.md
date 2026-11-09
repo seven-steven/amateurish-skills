@@ -7,7 +7,7 @@
 ## 安装
 
 ```bash
-npx skills add seven-steven/skills --skill publish-to-blog
+npx skills add seven-steven/amateurish-skills --skill publish-to-blog
 ```
 
 ## 配置

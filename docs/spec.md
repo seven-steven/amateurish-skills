@@ -29,7 +29,7 @@
 
 ## 3. Skill 设计
 
-- 自包含:`skills/publish-to-wxmp/` 目录携带运行所需的一切(scripts、themes、契约文档);安装 = `npx skills add seven-steven/skills --skill publish-to-wxmp`(或项目 `.agents/skills/`)。
+- 自包含:`skills/publish-to-wxmp/` 目录携带运行所需的一切(scripts、themes、契约文档);安装 = `npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp`(或项目 `.agents/skills/`)。
 - 用户配置在 `~/.config/wxmp-publisher/config.json`,运行时状态(image-cache、output、drafts)在 `~/.local/state/wxmp-publisher/`——均在 skill 目录之外,重装/更新 skill 不覆盖;首次运行自动从旧 `.bin/` 布局迁移。
 - CLI 入口 `skills/publish-to-wxmp/scripts/wxpush.mts`,以 `npx tsx` 运行,除 Node 外零外部依赖(引擎为预构建 bundle)。
 - 流程(SKILL.md):preflight(doctor)→ 内容适配 → build/upload/preview → push 草稿 → 回写 front-matter。

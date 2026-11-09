@@ -1,4 +1,4 @@
-# seven-steven/skills
+# seven-steven/amateurish-skills
 
 个人 agent skills 集合仓库。每个 skill 自带 README(配置与使用指引),本文件只做导航与安装。
 
@@ -14,8 +14,8 @@
 任一 skill(需要 Node ≥ 22.20):
 
 ```bash
-npx skills add seven-steven/skills --skill publish-to-wxmp
-npx skills add seven-steven/skills --skill publish-to-blog
+npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp
+npx skills add seven-steven/amateurish-skills --skill publish-to-blog
 ```
 
 不带 `--skill` 则交互式选择。安装后按各 skill README 配置:
