@@ -15,7 +15,7 @@ with patch.dict(os.environ, {
     "WX_TOKEN": "test-api-token",
     "WX_RATE_LIMIT": "30",
 }):
-    from server import server
+    from wxmp_server import server
 
 
 class PublishEncodingTests(unittest.TestCase):

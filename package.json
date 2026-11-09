@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run test:engine && npm run test:browser",
+    "test": "npm run test:engine && npm run test:server && npm run test:browser",
+    "test:server": "python3 -m unittest discover -s wxmp-server/tests -v",
     "test:engine": "node --test skills/publish-to-wxmp/engine/tests/*.test.mjs && python3 -m unittest discover -s skills/publish-to-wxmp/engine/tests -v",
     "test:browser": "playwright test"
   },
