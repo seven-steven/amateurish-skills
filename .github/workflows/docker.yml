@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE: wxmp-server
+  IMAGE: seven-steven/wxmp-server
 
 jobs:
   build:
