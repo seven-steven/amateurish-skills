@@ -35,7 +35,8 @@ class UploadTests(unittest.TestCase):
             project = Path(directory)
             shutil.copytree(ROOT / "scripts", project / "scripts")
             (project / "engine").mkdir()
-            shutil.copy2(ROOT / "engine/engine.mjs", project / "engine/engine.mjs")
+            for bundle in ("engine.mjs", "diagrams.bundle.mjs"):
+                shutil.copy2(ROOT / "engine" / bundle, project / "engine" / bundle)
             note = project / "note.md"
             note.write_text("## 主题标题\n\n![图片](image&name.png)\n", encoding="utf-8")
             (project / "image&name.png").write_bytes(b"test-image")

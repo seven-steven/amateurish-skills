@@ -1,4 +1,5 @@
 """Regression tests through the real CLI, parsing HTML instead of grepping CSS."""
+import os
 import shutil
 import subprocess
 import tempfile
@@ -74,7 +75,8 @@ class RenderingTests(unittest.TestCase):
                 project = directory / "project"
                 shutil.copytree(ROOT / "scripts", project / "scripts")
                 (project / "engine").mkdir()
-                shutil.copy2(ROOT / "engine/engine.mjs", project / "engine/engine.mjs")
+                for bundle in ("engine.mjs", "diagrams.bundle.mjs"):
+                    shutil.copy2(ROOT / "engine" / bundle, project / "engine" / bundle)
                 (project / "themes").mkdir()
                 (project / f"themes/{theme}.yaml").write_text(custom_theme, encoding="utf-8")
             note = directory / "note.md"
@@ -84,6 +86,9 @@ class RenderingTests(unittest.TestCase):
                 ["node", str(project / "scripts/wxpush.mts"), "build", str(note),
                  "--theme", theme, "--out", str(out)],
                 cwd=project, capture_output=True, text=True, timeout=15,
+                env={**os.environ, "WXMP_STATE_DIR": str(directory / "state"),
+                     "WXMP_CONFIG_DIR": str(directory / "config.json")},
+
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             return (out / "article.html").read_text(encoding="utf-8")

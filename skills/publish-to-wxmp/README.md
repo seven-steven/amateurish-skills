@@ -10,7 +10,9 @@
 npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp
 ```
 
-要求 Node ≥ 22(仅 `npx tsx` 按需下载,无需 npm install)。
+要求 Node ≥22.20,正式支持 macOS 与无桌面的 Linux。可直接用 `node <skill 目录>/scripts/wxpush.mts ...`,也可通过 `npx tsx` 运行。
+
+Mermaid 图表由随包 Pele、resvg WASM 和完整简体中文字体离线渲染成 PNG,无需另装浏览器、图像工具、字体或 npm 依赖。字体/WASM 约 19 MB(未压缩),另有预构建 JS。ASCII/说明性文本先由 agent 改写为 Mermaid,详见 [DIAGRAMS.md](DIAGRAMS.md);真实代码保持原样。
 
 需要配套部署服务端(持有 AppSecret、统一管理 access_token),见 [wxmp-server/deploy.md](../../wxmp-server/deploy.md)。
 

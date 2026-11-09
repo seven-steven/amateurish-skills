@@ -31,15 +31,15 @@
 
 - 自包含:`skills/publish-to-wxmp/` 目录携带运行所需的一切(scripts、themes、契约文档);安装 = `npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp`(或项目 `.agents/skills/`)。
 - 用户配置在 `~/.config/wxmp-publisher/config.json`,运行时状态(image-cache、output、drafts)在 `~/.local/state/wxmp-publisher/`——均在 skill 目录之外,重装/更新 skill 不覆盖;首次运行自动从旧 `.bin/` 布局迁移。
-- CLI 入口 `skills/publish-to-wxmp/scripts/wxpush.mts`,以 `npx tsx` 运行,除 Node 外零外部依赖(引擎为预构建 bundle)。
+- CLI 入口 `skills/publish-to-wxmp/scripts/wxpush.mts`,Node ≥22.20 可直接运行,也可用 `npx tsx`。macOS/无桌面 Linux 为正式平台;安装目录包含预构建引擎、图表 WASM 和中文字体,运行时不需要 npm install、系统图像库、浏览器或宿主字体。
 - 流程(SKILL.md):preflight(doctor)→ 内容适配 → build/upload/preview → push 草稿 → 回写 front-matter。
 
 ## 4. CLI 契约摘要
 
 命令:`doctor | build | upload | push | preview`(完整契约见 `skills/publish-to-wxmp/WXPUSH.md`)。
 
-- `build <note.md> [--theme <t>] [--out <dir>]` — markdown → 内联样式 HTML。
-- `upload <note.md>` — 图片上传微信 CDN,哈希缓存幂等,重写 run dir 里的 md/html。
+- `build <note.md> [--theme <t>] [--out <dir>]` — markdown → 内联样式 HTML,Mermaid 图块自动经 Pele/SVG/PNG 成图。
+- `upload <note.md>` — 从已完成构建发现图片(含生成图),上传微信 CDN,哈希缓存幂等,重写该 run 的 md/html。上传/预览/推草稿校验输入归属和内容指纹;失败或过期构建需先重建,源笔记正文不变。后续命令也可用 `--out` 明确选择构建。
 - `push` — 封面素材 + 草稿;本地先校验 title ≤64、digest ≤120、封面 <2MB。
 - `preview [--port] [--watch]` — 本地静态预览;`--watch` 监听产物变化自动刷新浏览器。
 
@@ -64,8 +64,9 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 - CLI 保存 `postProcessHtml` 的结果(包含容器和引用链接),去掉微信不保留的 `<style>`;排版所需规则必须内联。
 - 保存前经 `skills/publish-to-wxmp/engine/wechat-styles.mjs` 的 `inlineWechatStyles` 输出兼容层:用 HTML/CSS 解析器按元素作用域展开 `var(...)`(含继承、局部变量与回退),再移除 `--...` 自定义属性声明。真实草稿最小复现表明,微信会丢弃自定义属性之后的普通样式;仅浏览器预览正常不足以验证。preview/upload/push 必须共用这一产物,不能只在发送时修补。解析器一起打包进 engine,不增加 CLI 运行时依赖。
 - 升级引擎 = 改版本号重跑构建脚本,重新提交产物。主题、补丁与微信输出兼容层改动也必须重建,不可只手改 bundle。
-- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 在本地开发时手动运行两者,不配置 GitHub Actions 自动测试。安装和覆盖范围见 [skills/publish-to-wxmp/engine/tests/README.md](../skills/publish-to-wxmp/engine/tests/README.md)。
-- 归属:引擎源自 doocs/md(Apache-2.0),见 `skills/publish-to-wxmp/engine/ATTRIBUTION.md`。
+- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 同时覆盖类型检查、布局、引擎、服务端与浏览器测试;独立测试 workflow 在 macOS/Linux 上执行同一命令。安装和覆盖范围见 [skills/publish-to-wxmp/engine/tests/README.md](../skills/publish-to-wxmp/engine/tests/README.md)。
+- 图表:独立、锁依赖的 Pele/resvg-wasm bundle 加随包完整 Noto 简体中文字体,离线成图。先由 agent 将 ASCII/说明性文本改写为 Mermaid,CLI 只做确定性渲染;不调用模型。全部 Pele 内置类型走统一入口,首版仅支持自包含文字/形状。图内网页链接移至图注并沿用脚注;外部图片、自定义图标、公式、缺字、可检测裁切及超限均使构建失败。保留 Mermaid、SVG、PNG,发布只嵌入 PNG;手机预览和用户确认仍是最终验收。
+- 归属:排版引擎源自 doocs/md(Apache-2.0);图表发行物同时保留 Pele 的 MIT/ISC、resvg 的 MPL/对应源码信息与字体 OFL,见 `skills/publish-to-wxmp/engine/ATTRIBUTION.md`。
 
 ## 7. Server 设计
 

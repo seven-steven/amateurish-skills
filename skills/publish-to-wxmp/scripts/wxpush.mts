@@ -10,8 +10,8 @@ import http from "node:http";
 import os from "node:os";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import * as yaml from "./yaml.mts";
+import { beginBuild, loadBuild, saveRecord } from "./artifacts.mts";
 
 const HERE = import.meta.dirname;
   // make CJS deps (reading-time) able to require() node builtins under ESM
@@ -142,16 +142,6 @@ function loadTheme(name: string): Theme {
 }
 
 // ---------- run dir ----------
-function runDir(note: string): string {
-  const slug = path.basename(note).replace(/\.md$/i, "");
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const dir = path.join(RUNTIME_OUT, `${slug}-${stamp}`);
-  fs.mkdirSync(dir, { recursive: true });
-  const latest = path.join(RUNTIME_OUT, "latest");
-  try { fs.rmSync(latest); } catch { /* not a symlink yet */ }
-  try { fs.symlinkSync(dir, latest); } catch { /* windows */ }
-  return dir;
-}
 function writeRun(dir: string, file: string, content: string) {
   fs.writeFileSync(path.join(dir, file), content);
 }
@@ -291,6 +281,11 @@ async function main() {
     let ok = true;
     const base = loadConfig().api_base || env("WXMP_API_BASE");
     console.log(`engine: ${fs.existsSync(ENGINE) ? "ok" : "MISSING " + ENGINE}`); ok &&= fs.existsSync(ENGINE);
+    try {
+      const { checkDiagramAssets } = await import("../engine/diagrams.bundle.mjs");
+      checkDiagramAssets();
+      console.log("diagrams: ok (offline renderer, WASM and Chinese font)");
+    } catch (error) { console.log(`diagrams: ${(error as Error).message}`); ok = false; }
     console.log(`api_base: ${base ?? "MISSING (set WXMP_API_BASE or ~/.config/wxmp-publisher/config.json)"}`); ok &&= !!base;
     if (base) {
       try {
@@ -317,6 +312,7 @@ async function main() {
   const cfg = loadConfig();
 
   if (cmd === "build") {
+    const { dir, record } = beginBuild(RUNTIME_OUT, notePath, raw, flag("out"));
     const theme = flag("theme") || cfg.theme || "default";
     const selectedTheme = loadTheme(theme);
     const renderer = initRenderer({
@@ -331,31 +327,35 @@ async function main() {
       isMacCodeBlock: selectedTheme.renderOptions?.isMacCodeBlock ?? true,
       isShowLineNumber: selectedTheme.renderOptions?.isShowLineNumber ?? false,
     });
-    const { html, readingTime } = renderMarkdown(body, renderer);
+    const { compileDiagrams, imageSources } = await import("../engine/diagrams.bundle.mjs");
+    const diagramNow = fs.statSync(notePath).mtimeMs;
+    const compiled = await compileDiagrams(body, dir, diagramNow);
+    const { html, readingTime } = renderMarkdown(compiled.markdown, renderer);
     // Preserve the container/references and save the same concrete inline CSS
     // for preview and push. WeChat strips stylesheets and mishandles custom
     // property declarations, so resolve var() before removing their definitions.
     const full = inlineWechatStyles(postProcessHtml(html, readingTime, renderer)
       .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ""));
-    const dir = flag("out") ? path.resolve(flag("out")!) : runDir(notePath);
-    fs.mkdirSync(dir, { recursive: true });
     writeRun(dir, "article.html", full);
-    writeRun(dir, "article.md", body);
-    writeRun(dir, "meta.json", JSON.stringify({ theme, meta }, null, 2));
+    writeRun(dir, "article.md", compiled.markdown);
+    writeRun(dir, "meta.json", JSON.stringify({ theme, meta, diagramNow }, null, 2));
+    record.images = imageSources(full, noteDir).map(image => compiled.images.includes(image.src) ? { ...image, baseDir: dir } : image);
+    record.state = "built";
+    saveRecord(dir, record);
     console.log(`built: ${path.join(dir, "article.html")} (theme: ${theme})`);
     return;
   }
 
-  const latest = path.join(RUNTIME_OUT, "latest");
-  if (!fs.existsSync(latest)) die("no build yet: run build first");
-  const run = fs.realpathSync(latest);
+  const { dir: run, record } = loadBuild(RUNTIME_OUT, notePath, raw, flag("out"));
 
   if (cmd === "upload") {
+    if (record.state === "uploaded") { console.log("already uploaded"); return; }
     const cache = loadCache();
-    const images = collectImages(body);
-    let out = body;
-    for (const src of images) {
-      const { bytes, mime, name } = await fetchBytes(src, noteDir);
+    const { rewriteImageReferences, replaceImage } = await import("../engine/diagrams.bundle.mjs");
+    let out = fs.readFileSync(path.join(run, "article.md"), "utf8");
+    let html = fs.readFileSync(path.join(run, "article.html"), "utf8");
+    for (const { src, baseDir } of record.images) {
+      const { bytes, mime, name } = await fetchBytes(src, baseDir);
       const hash = crypto.createHash("sha256").update(bytes).digest("hex");
       let url = cache[hash];
       if (!url) {
@@ -363,17 +363,13 @@ async function main() {
         cache[hash] = url; saveCache(cache);
         console.log(`uploaded: ${src} -> ${url}`);
       } else console.log(`cached:   ${src}`);
-      out = out.split(src).join(url);
+      out = rewriteImageReferences(out, src, url);
+      html = replaceImage(html, src, url);
     }
     writeRun(run, "article.md", out);
-    const html = fs.readFileSync(path.join(run, "article.html"), "utf8");
-    let newHtml = html;
-    for (const src of images) {
-      const { bytes } = await fetchBytes(src, noteDir);
-      const hash = crypto.createHash("sha256").update(bytes).digest("hex");
-      newHtml = newHtml.split(src).join(cache[hash] ?? src);
-    }
-    writeRun(run, "article.html", newHtml);
+    writeRun(run, "article.html", html);
+    record.state = "uploaded";
+    saveRecord(run, record);
     console.log(`rewritten: ${path.join(run, "article.md")}`);
     return;
   }
@@ -385,12 +381,7 @@ async function main() {
     const noteKey = notePath;
     if (update && !manualMediaId && !drafts[noteKey])
       die("--update but no media_id on record for this note: push first, or pass --media-id <id>");
-    // freshness: the build must not predate the note (avoid overwriting a draft with stale HTML)
-    if (update) {
-      const htmlPath = path.join(run, "article.html");
-      if (fs.statSync(notePath).mtimeMs > fs.statSync(htmlPath).mtimeMs)
-        die("build is stale: note changed since last build — run build (and upload) first");
-    }
+    if (record.state !== "uploaded") die("images not uploaded: run upload first");
     const title = flag("title") || meta.title || body.match(/^#\s+(.+)$/m)?.[1];
     if (!title) die("no title (front-matter wechat.title, --title, or an H1)");
     if (title.length > 64) die(`title ${title.length} chars > 64`);

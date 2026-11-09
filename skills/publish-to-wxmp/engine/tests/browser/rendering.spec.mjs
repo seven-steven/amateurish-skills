@@ -20,7 +20,10 @@ test.beforeAll(() => {
     execFileSync(process.execPath, [
       path.join(root, "scripts/wxpush.mts"), "build", fixture,
       "--theme", theme, "--out", out,
-    ], { cwd: root, timeout: 15000 });
+    ], { cwd: root, timeout: 15000, env: { ...process.env,
+      WXMP_STATE_DIR: path.join(directory, "state"),
+      WXMP_CONFIG_DIR: path.join(directory, "config.json"),
+    } });
     articles.set(theme, readFileSync(path.join(out, "article.html"), "utf8"));
   }
 });

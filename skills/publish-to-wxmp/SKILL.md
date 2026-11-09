@@ -26,14 +26,15 @@ Decisions autonomous; body copy stays zh-CN and near-verbatim. Adjustments allow
 - `digest` ≤ 120 chars: one sentence the reader gains.
 - **Note references**: Adapt every reference to a note in the article copy, including external note URLs, wiki links, relative note paths, and wording such as “see this note”. Replace it with a confirmed published Wechat article URL for the referenced content, or rewrite the surrounding passage in context so it stands alone without the note reference. When no such URL is known, rewrite.
 - **Web references**: Preserve non-note web references and their surrounding prose. Keep Markdown links; for bare non-Wechat URLs or links whose label is the URL, use a short contextual label instead (`[label](URL)`). `build` converts these links to numbered endnotes and deduplicates by URL; `mp.weixin.qq.com` article links remain clickable.
-- Code blocks stay as-is (the renderer themes them).
+- **Diagrams**: Rewrite ASCII/Unicode art and prose-only code blocks as rendered diagrams following [`DIAGRAMS.md`](DIAGRAMS.md). Use the same rendering path for existing diagram-source blocks, such as Mermaid.
+- **Code**: Preserve actual source code, commands, configuration, and verbatim logs/output; classify by content, not by a `text` label or missing language tag.
 - Front-matter and scaffolding are dropped (the tool handles front-matter reads).
 
-Done when: an adapted markdown copy exists in the run dir (see `build`), every note reference is adapted, and non-Wechat web references in prose have link labels distinct from their URLs.
+Done when: an adapted Markdown publishing copy exists outside the installed skill directory, every note reference is adapted, non-Wechat web references in prose have link labels distinct from their URLs, and diagram rewriting meets step 1 of `DIAGRAMS.md` when applicable. Keep this copy as the input to all subsequent CLI commands.
 
 ### 3. Build, upload, preview
 
-`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持迭代)。Cover per WXPUSH conventions; ask the user only when no cover candidate exists. Open the preview for the user; apply requested edits, rebuild, re-preview when structural.
+`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持迭代)。Cover per WXPUSH conventions; ask the user only when no cover candidate exists. For diagrams, verify that the uploaded images load and remain legible at phone width, with complete labels and unclipped connectors. Open the preview for the user; apply requested edits, rebuild, re-preview when structural.
 
 Done when: the user confirms the rendered article.
 

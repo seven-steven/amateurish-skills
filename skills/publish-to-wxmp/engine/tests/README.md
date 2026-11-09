@@ -34,15 +34,18 @@ BROWSER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google C
 | `bundle.test.mjs` | 样式属性转义、主题真源与 bundle 一致、注册不污染 default、构建补丁遇到上游漂移时拒绝继续 |
 | `test_rendering.py` | 真实 `wxpush build` 输出经 HTMLParser 解析后仍有完整样式;四个内置主题无 CSS 自定义属性或未解析的变量引用;自定义主题变量、局部覆盖、继承与嵌套回退;正文代码中的 `var(...)` 不被替换;双层标题;正文和引用间距;容器与参考链接;内联代码布局;YAML 主题继承和含引号/`&`/`<`/`>` 的字体名往返 |
 | `test_upload.py` | 真实 `build → upload` 经本地 HTTP 图片服务后,含 `&` 的图片地址仍能正确重写为 CDN 地址,且主题样式不丢失 |
+| `test_artifacts.py` | 构建归属与内容指纹、显式输出目录、重复上传、原样代码保留、模拟草稿消费同一 HTML,错误输入在网络请求前被拒绝 |
+| `test_diagrams.py` | 真实 PNG 解码与像素、中文标签/连线、代表性多类型/多图、稳定重建、图表链接转脚注、错误/资源/公式/字形限制、安装目录无 npm 包的离线成图及资产损坏诊断 |
+| `browser/diagrams.spec.mjs` | 375px/768px 下加载实际 PNG,检查解码、非空像素、页面宽度,保存中文多图预览截图供视觉核对 |
 | `browser/rendering.spec.mjs` | Chromium 实际计算样式:黑底白字圆角标题及其加粗文字、通栏背景、灰底引用、正文间距、深灰代码文字/浅灰行号与内部横向滚动;375px/768px 两种宽度;全部四个内置主题 |
 
-HTML 解析测试和浏览器测试共享 `fixtures/geek-black.md`。浏览器只载入真实 CLI 保存的 HTML,不附加站点 CSS,并禁用网络请求;构建产物必须不依赖 `<style>` 或外链样式表。临时笔记、自定义主题、输出目录均隔离,不会改动用户配置和草稿记录。
+HTML 解析测试和浏览器测试共享 `fixtures/geek-black.md`。浏览器只载入真实 CLI 保存的 HTML,不附加站点 CSS,并禁用网络请求;构建产物必须不依赖 `<style>` 或外链样式表。临时笔记、自定义主题、配置、运行时状态与输出目录均隔离,不会改动用户最近构建或草稿记录。
 
-浏览器测试主要断言计算样式及几何约束,不使用易受系统字体影响的像素快照。失败时保留截图和 trace 于 `test-results/`。排版回归测试仅在本地开发时手动运行,不配置 GitHub Actions 自动测试。
+浏览器测试主要断言计算样式及几何约束,不使用易受系统字体影响的像素快照。失败时保留截图和 trace 于 `test-results/`。GitHub Actions 在 macOS/Linux、Node 22 上执行同一 `npm test` 全套测试;本地通过不代表远端矩阵已经执行通过。
 
 ## 主题选择与参考图验收
 
-测试通过不等于实际发布时选中了参考主题。圆角黑色标题条、浅灰引用、无交通灯的带行号代码块属于 `geek-black`,不是 `default`。对齐这份参考时显式使用 `build <note.md> --theme geek-black`,并核对该 run 的 `meta.json` 中 `theme` 值;省略参数时用机器本地 `.bin/config.json` 的选择,再回退到 `default`。不要为了让两个主题相似而修改内置 `default`。
+测试通过不等于实际发布时选中了参考主题。圆角黑色标题条、浅灰引用、无交通灯的带行号代码块属于 `geek-black`,不是 `default`。对齐这份参考时显式使用 `build <note.md> --theme geek-black`,并核对该 run 的 `meta.json` 中 `theme` 值;省略参数时用机器本地配置的选择,再回退到 `default`。不要为了让两个主题相似而修改内置 `default`。
 
 比较截图时也要统一内容宽度。已有 preview 进程绑定启动时的 run,重建到新的 run 后需重启预览,并确认 HTTP 返回的正文与本次 `article.html` 一致,不能把旧页面当成最新产物。
 
