@@ -3,7 +3,7 @@
 ## Rules
 
 - Follow TDD method
-- Run full test after any code change
+- Run `npm test` after any code change; it is the same suite CI runs. Every test suite in the repo must be reachable from `npm test`
 
 ## Agent skills
 
