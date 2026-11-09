@@ -24,11 +24,12 @@ Decisions autonomous; body copy stays zh-CN and near-verbatim. Adjustments allow
 
 - `title` ≤ 64 chars from front-matter or the H1 (rephrase for a Wechat audience if too plain).
 - `digest` ≤ 120 chars: one sentence the reader gains.
-- Strip internal links that resolve to nothing on Wechat (wiki links, repo-relative paths); keep external http(s) links.
+- **Note references**: Adapt every reference to a note in the article copy, including external note URLs, wiki links, relative note paths, and wording such as “see this note”. Replace it with a confirmed published Wechat article URL for the referenced content, or rewrite the surrounding passage in context so it stands alone without the note reference. When no such URL is known, rewrite.
+- **Web references**: Preserve non-note web references and their surrounding prose. Keep Markdown links; for bare non-Wechat URLs or links whose label is the URL, use a short contextual label instead (`[label](URL)`). `build` converts these links to numbered endnotes and deduplicates by URL; `mp.weixin.qq.com` article links remain clickable.
 - Code blocks stay as-is (the renderer themes them).
 - Front-matter and scaffolding are dropped (the tool handles front-matter reads).
 
-Done when: an adapted markdown copy exists in the run dir (see `build`).
+Done when: an adapted markdown copy exists in the run dir (see `build`), every note reference is adapted, and non-Wechat web references in prose have link labels distinct from their URLs.
 
 ### 3. Build, upload, preview
 

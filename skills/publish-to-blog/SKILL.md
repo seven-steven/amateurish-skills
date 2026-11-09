@@ -12,7 +12,7 @@ Take a note, adapt it into a Hexo post, preview, and publish after user confirma
 
 - `note_path` (required): note file path.
 - `intro` (optional): author's note, placed as a blockquote at the top of the post body.
-- `ai_assisted` (optional, default `false`): `true` only when AI rewrote part of the content. This flow copies near-verbatim, so it stays `false`.
+- `ai_assisted` (optional, default `false`): set to `true` when the input is `true` or this flow rewrites body prose, including note-reference adaptation. URL-only replacements leave it unchanged.
 
 All other decisions are autonomous; only the publish gate asks the user.
 
@@ -24,12 +24,13 @@ Read config from `~/.config/publish-to-blog/config.json` (expand `~`) for `blog_
 
 Done when: config resolved, note read, blog repo state known.
 
-### 2. Adapt the note — metadata only, body verbatim
+### 2. Adapt the note — metadata and note references
 
 Write the post to `source/_posts/<category>/<subcategory>/<slug>.md` in the blog repo. Transformations allowed, exhaustive:
 
-- **Front-matter**: `title` (may be rephrased for a blog audience, zh-CN), `date` (today, `YYYY-MM-DD HH:MM:SS`), `categories`, `tags`, `toc: true`, plus `ai_assisted: true` per the input flag.
+- **Front-matter**: `title` (may be rephrased for a blog audience, zh-CN), `date` (today, `YYYY-MM-DD HH:MM:SS`), `categories`, `tags`, `toc: true`, plus `ai_assisted: true` per the input rule above.
 - **Heading shift**: the note's H1 becomes the front-matter title; remaining headings promote one level (H2→H1). Strip manual numbering from headings (e.g. `一、`, `1.`) — the blog theme numbers them automatically.
+- **Note references**: Adapt every reference to a note in the post copy, including external note URLs, wiki links, relative note paths, and wording such as “see this note”. Replace it with a confirmed published blog URL for the referenced content, or rewrite the surrounding passage in context so it stands alone without the note reference. When no such URL is known, rewrite.
 - **Intro**: if given, insert as a blockquote right after the excerpt marker.
 - **Excerpt marker**: one literal `<!-- more -->` line after the first or second section — at least one full section shown, at most two. The intro does not count as a section.
 
@@ -37,7 +38,7 @@ Everything else is copied verbatim.
 
 Choose autonomously from the note's content: category, subcategory (create when none fits), slug (English kebab-case; the slug is the URL path), tags. Categories and tags use Chinese except for established technical terms (e.g. GTD, Hexo, PARA).
 
-Done when: post file written.
+Done when: post file written and every note reference adapted.
 
 ### 3. Preview and confirm
 

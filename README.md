@@ -7,7 +7,7 @@
 | Skill | 目录 | 简介 |
 | --- | --- | --- |
 | publish-to-wxmp | [skills/publish-to-wxmp/](skills/publish-to-wxmp/) | 把 Markdown 笔记排版发布到微信公众号草稿箱(本地渲染引擎 + 自定义主题 + 真实预览),群发由人工在后台完成 |
-| publish-to-blog | [skills/publish-to-blog/](skills/publish-to-blog/) | 把笔记改编为 Hexo 博客文章:元数据自动决策、正文原样,预览确认后发布并回链 |
+| publish-to-blog | [skills/publish-to-blog/](skills/publish-to-blog/) | 把笔记改编为 Hexo 博客文章:元数据自动决策、正文仅按需适配笔记引用,预览确认后发布并回链 |
 
 ## 安装
 
