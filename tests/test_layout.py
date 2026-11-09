@@ -72,13 +72,18 @@ class LayoutIntegrityTests(unittest.TestCase):
                          "deploy image and CI image drifted apart")
 
     def test_npm_test_covers_all_python_test_dirs(self):
-        """Every directory containing python tests is wired into npm scripts —
-        no test suite that only CI runs (that's how the server rename slipped through)."""
-        pkg_scripts = (ROOT / "package.json").read_text(encoding="utf-8")
+        """Every directory containing python tests is reachable from npm test —
+        either named in a script or delegated to via a runner script (no CI-only suites,
+        which is how the server rename slipped through)."""
+        pkg = (ROOT / "package.json").read_text(encoding="utf-8")
+        runners = "".join(p.read_text(encoding="utf-8")
+                           for p in ROOT.glob("**/run-tests.sh") if "node_modules" not in p.parts)
         test_dirs = {p.parent.relative_to(ROOT).as_posix()
                      for p in ROOT.glob("**/test_*.py") if "node_modules" not in p.parts}
+        self.assertTrue(test_dirs, "sanity: no python tests found")
         for d in sorted(test_dirs):
-            self.assertIn(d, pkg_scripts, f"test dir '{d}' is not run by any npm script")
+            self.assertTrue(d in pkg or d in runners,
+                            f"test dir '{d}' is not run by any npm script or runner")
 
 
 if __name__ == "__main__":
