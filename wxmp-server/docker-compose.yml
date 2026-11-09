@@ -1,6 +1,6 @@
 services:
   wxpush:
-    image: ghcr.io/seven-steven/amateurish-skills-server:latest  # or: build: .
+    image: ghcr.io/seven-steven/wxmp-server:latest  # or: build: .
     restart: unless-stopped
     environment:
       - WX_APP_ID=${WX_APP_ID}

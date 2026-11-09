@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE: ${{ github.repository }}-server
+  IMAGE: wxmp-server
 
 jobs:
   build:
