@@ -2,11 +2,12 @@
 /**
  * wxpush — push a markdown note to the Wechat Official Account draft box.
  * Contract: ../WXPUSH.md. Zero npm deps: engine is a prebuilt bundle at
- * ../../engine/engine.mjs (see engine/ATTRIBUTION.md).
+ * ../engine/engine.mjs (see engine/ATTRIBUTION.md).
  */
 import fs from "node:fs";
 import path from "node:path";
 import http from "node:http";
+import os from "node:os";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -16,7 +17,7 @@ const HERE = import.meta.dirname;
   // make CJS deps (reading-time) able to require() node builtins under ESM
   const { createRequire } = await import("node:module");
   if (typeof (globalThis as any).require === "undefined") (globalThis as any).require = createRequire(import.meta.url);
-  const ENGINE = path.join(HERE, "..", "..", "engine", "engine.mjs");
+  const ENGINE = path.join(HERE, "..", "engine", "engine.mjs");
 if (!fs.existsSync(ENGINE)) die(`engine bundle missing: ${ENGINE} (run node engine/build.mjs)`);
 const { initRenderer, renderMarkdown, postProcessHtml, inlineWechatStyles, themeMap } = await import(
   pathToFileURL(ENGINE)
@@ -25,12 +26,35 @@ function pathToFileURL(p: string): string {
   return `file://${p.split(path.sep).map(encodeURIComponent).join("/").replace(/^\/?/, "/")}`;
 }
 
-// runtime state lives next to the skill install
-const RUNTIME = path.join(HERE, "..", ".bin");
+// user config and runtime state live OUTSIDE the skill dir so `skills add` reinstalls never clobber them
+const CONFIG = envHome("WXMP_CONFIG_DIR") ?? path.join(os.homedir(), ".config", "wxmp-publisher", "config.json");
+const RUNTIME = envHome("WXMP_STATE_DIR") ?? path.join(os.homedir(), ".local", "state", "wxmp-publisher");
+function envHome(k: string): string | undefined {
+  const v = process.env[k]?.trim();
+  if (!v) return undefined;
+  return v.startsWith("~") ? path.join(os.homedir(), v.slice(1)) : v;
+}
 const RUNTIME_OUT = path.join(RUNTIME, "output");
 const IMAGE_CACHE = path.join(RUNTIME, "image-cache.json");
-const CONFIG = path.join(RUNTIME, "config.json");
+const DRAFTS = path.join(RUNTIME, "drafts.json");
 const THEMES_DIR = path.join(HERE, "..", "themes");
+
+// one-time migration from the legacy skill-local `.bin/` layout
+const LEGACY_BIN = path.join(HERE, "..", ".bin");
+function migrateLegacy(): void {
+  if (!fs.existsSync(LEGACY_BIN)) return;
+  fs.mkdirSync(path.dirname(CONFIG), { recursive: true });
+  fs.mkdirSync(RUNTIME, { recursive: true });
+  const legacyConfig = path.join(LEGACY_BIN, "config.json");
+  if (fs.existsSync(legacyConfig) && !fs.existsSync(CONFIG))
+    fs.copyFileSync(legacyConfig, CONFIG);
+  for (const name of ["image-cache.json", "drafts.json", "output"]) {
+    const src = path.join(LEGACY_BIN, name);
+    if (fs.existsSync(src) && !fs.existsSync(path.join(RUNTIME, name)))
+      fs.cpSync(src, path.join(RUNTIME, name), { recursive: true });
+  }
+}
+migrateLegacy();
 
 type Theme = {
   base?: Record<string, string>;
@@ -48,7 +72,7 @@ function env(k: string): string | undefined {
 }
 function apiBase(): string {
   const base = env("WXMP_API_BASE") || loadConfig().api_base;
-  if (!base) die("no API base: set WXMP_API_BASE or .bin/config.json api_base");
+  if (!base) die("no API base: set WXMP_API_BASE or api_base in ~/.config/wxmp-publisher/config.json");
   return base.replace(/\/+$/, "");
 }
 function authHeaders(): Record<string, string> {
@@ -205,7 +229,6 @@ async function pushDraft(opts: { title: string; html: string; digest?: string; a
 }
 
 // ---------- draft registry: note path -> media_id of its draft ----------
-const DRAFTS = path.join(RUNTIME, "drafts.json");
 type Drafts = Record<string, string>;
 function loadDrafts(): Drafts {
   try { return JSON.parse(fs.readFileSync(DRAFTS, "utf8")); } catch { return {}; }
@@ -268,7 +291,7 @@ async function main() {
     let ok = true;
     const base = loadConfig().api_base || env("WXMP_API_BASE");
     console.log(`engine: ${fs.existsSync(ENGINE) ? "ok" : "MISSING " + ENGINE}`); ok &&= fs.existsSync(ENGINE);
-    console.log(`api_base: ${base ?? "MISSING (set WXMP_API_BASE or .bin/config.json)"}`); ok &&= !!base;
+    console.log(`api_base: ${base ?? "MISSING (set WXMP_API_BASE or ~/.config/wxmp-publisher/config.json)"}`); ok &&= !!base;
     if (base) {
       try {
         const res = await fetch(`${base.replace(/\/+$/, "")}/health`);

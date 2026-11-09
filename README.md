@@ -1,70 +1,44 @@
-# wxmp-publisher
+# seven-steven/skills
 
-把 Markdown 笔记发布到微信公众号**草稿箱**的自动化工具链:agent skill + 本地 CLI + 服务端 token 服务。最终群发永远由人工在公众号后台完成。
+个人 agent skills 集合仓库。每个 skill 自带 README(配置与使用指引),本文件只做导航与安装。
 
+## Skills
+
+| Skill | 目录 | 简介 |
+| --- | --- | --- |
+| publish-to-wxmp | [skills/publish-to-wxmp/](skills/publish-to-wxmp/) | 把 Markdown 笔记排版发布到微信公众号草稿箱(本地渲染引擎 + 自定义主题 + 真实预览),群发由人工在后台完成 |
+| publish-to-blog | [skills/publish-to-blog/](skills/publish-to-blog/) | 把笔记改编为 Hexo 博客文章:元数据自动决策、正文原样,预览确认后发布并回链 |
+
+## 安装
+
+任一 skill(需要 Node ≥ 22.20):
+
+```bash
+npx skills add seven-steven/skills --skill publish-to-wxmp
+npx skills add seven-steven/skills --skill publish-to-blog
 ```
-┌─────────────┐  HTTPS + Bearer   ┌──────────────┐   ┌──────────────┐
-│ 本地 CLI     │ ────────────────▶ │ token 服务    │──▶│ 微信 MP API  │
-│ (skill 调用) │                   │ (Docker)     │   └──────────────┘
-└─────────────┘                   └──────────────┘
-```
 
-- 排版完全本地离线(doocs/md 引擎预构建 bundle,零 npm 依赖)
-- AppSecret 只在服务端;access_token 集中管理
-- 图片上传微信 CDN(哈希缓存幂等)、封面素材、创建草稿
+不带 `--skill` 则交互式选择。安装后按各 skill README 配置:
 
-## 组成
+- [publish-to-wxmp 配置](skills/publish-to-wxmp/README.md#配置)(需配套服务端)
+- [publish-to-blog 配置](skills/publish-to-blog/README.md#配置)
+
+用户配置存放在 `~/.config/<skill>/`,与 skill 目录分离——重装或更新 skill 不会覆盖本地配置。
+
+## 服务端
+
+`publish-to-wxmp` 需要配套的 token 服务(持有 AppSecret、统一管理 access_token,Docker 部署):部署见 [wxmp-server/deploy.md](wxmp-server/deploy.md)。
+
+## 仓库结构
 
 | 目录 | 内容 |
 | --- | --- |
-| `skill/` | agent 技能(SKILL.md 流程 + WXPUSH.md CLI 契约 + scripts + themes) |
-| `server/` | token 服务:Flask + Docker + GHCR 镜像,见 `server/deploy.md` |
-| `engine/` | 排版引擎预构建 bundle 与构建脚本,见 `engine/ATTRIBUTION.md` |
+| `skills/` | 各 skill(自包含:SKILL.md + scripts + 主题 + README) |
+| `wxmp-server/` | publish-to-wxmp 的 token 服务(Flask + Docker + GHCR 镜像) |
 | `docs/` | 设计 spec(`spec.md`)与安全设计(`security.md`) |
 
-## 快速开始
-
-### 1. 服务端(公网服务器)
-
-见 [server/deploy.md](server/deploy.md):填 `.env`(AppID/AppSecret/Token)、公众号后台加 IP 白名单、`docker compose up -d`、反代 HTTPS。
-
-### 2. 本地安装 skill
+## 开发
 
 ```bash
-git clone https://github.com/seven-steven/wxmp-publisher.git
-cd wxmp-publisher && skill/install.sh        # 软链到 ~/.agents/skills/publish-to-wxmp
+npm test   # engine 单测 + Playwright 浏览器测试(排版回归)
 ```
-
-skills.sh 用户(需 Node ≥ 22.20,多 skill 仓库用子目录形式):
-
-```bash
-npx skills add seven-steven/wxmp-publisher/skill --skill publish-to-wxmp
-```
-
-要求:Node ≥ 22(仅 `npx tsx` 运行时按需下载,无需 npm install)。
-
-### 3. 配置
-
-```bash
-# ~/.agents/skills/publish-to-wxmp/.bin/config.json
-{ "api_base": "https://wx.example.com", "theme": "default" }
-export WXMP_API_TOKEN=<与服务端 WX_TOKEN 一致>
-```
-
-### 4. 验证与使用
-
-```bash
-npx tsx .agents/skills/publish-to-wxmp/scripts/wxpush.mts doctor     # 全绿即就绪
-```
-
-然后在任意装了该 skill 的 agent 对话里说「发布 xx.md 到公众号」,或直接走 CLI 契约 [skill/WXPUSH.md](skill/WXPUSH.md)。
-
-## 文档
-
-- 设计总览:[docs/spec.md](docs/spec.md)
-- 服务端安全:[docs/security.md](docs/security.md)
-- 部署:[server/deploy.md](server/deploy.md)
-
-## License
-
-Apache-2.0(排版引擎来自 [doocs/md](https://github.com/doocs/md),同为 Apache-2.0,见 [engine/ATTRIBUTION.md](engine/ATTRIBUTION.md))

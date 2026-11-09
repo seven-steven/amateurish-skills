@@ -18,7 +18,7 @@ test.beforeAll(() => {
     // Test the exact artifact used by upload/push, not a hand-written mock page
     // or renderMarkdown in isolation (which used to hide the CLI font bug).
     execFileSync(process.execPath, [
-      path.join(root, "skill/scripts/wxpush.mts"), "build", fixture,
+      path.join(root, "scripts/wxpush.mts"), "build", fixture,
       "--theme", theme, "--out", out,
     ], { cwd: root, timeout: 15000 });
     articles.set(theme, readFileSync(path.join(out, "article.html"), "utf8"));

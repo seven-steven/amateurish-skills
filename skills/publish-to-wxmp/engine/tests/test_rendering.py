@@ -72,16 +72,16 @@ class RenderingTests(unittest.TestCase):
                 # Exercise discovery and base_theme inheritance without writing
                 # fixtures into the user's real skill/themes or runtime state.
                 project = directory / "project"
-                shutil.copytree(ROOT / "skill/scripts", project / "skill/scripts")
+                shutil.copytree(ROOT / "scripts", project / "scripts")
                 (project / "engine").mkdir()
                 shutil.copy2(ROOT / "engine/engine.mjs", project / "engine/engine.mjs")
-                (project / "skill/themes").mkdir()
-                (project / f"skill/themes/{theme}.yaml").write_text(custom_theme, encoding="utf-8")
+                (project / "themes").mkdir()
+                (project / f"themes/{theme}.yaml").write_text(custom_theme, encoding="utf-8")
             note = directory / "note.md"
             out = directory / "out"
             note.write_text(note_text, encoding="utf-8")
             result = subprocess.run(
-                ["node", str(project / "skill/scripts/wxpush.mts"), "build", str(note),
+                ["node", str(project / "scripts/wxpush.mts"), "build", str(note),
                  "--theme", theme, "--out", str(out)],
                 cwd=project, capture_output=True, text=True, timeout=15,
             )

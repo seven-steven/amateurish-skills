@@ -1,11 +1,13 @@
-# runtime state (machine-local)
-skill/.bin/
-skill/config.json
+# runtime state (machine-local; canonical location is outside the repo)
+skills/*/.bin/
+skills/*/config.json
+
 # engine build intermediates never land here; engine.mjs IS committed
 __pycache__/
 *.pyc
 .env
 .DS_Store
+
 # development-only dependencies and browser test artifacts
 node_modules/
 test-results/

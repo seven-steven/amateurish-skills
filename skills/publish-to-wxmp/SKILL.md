@@ -14,7 +14,7 @@ The tool layer is [`WXPUSH.md`](WXPUSH.md) — read it first; its command contra
 
 ### 1. Preflight
 
-Run `doctor`. If it fails, fix the environment (env vars, `.bin/config.json`, server reachability) before anything else.
+Run `doctor`. If it fails, fix the environment (env vars, `~/.config/wxmp-publisher/config.json`, server reachability) before anything else.
 
 Done when: `doctor` passes.
 
@@ -40,7 +40,7 @@ Done when: the user confirms the rendered article.
 
 `push` with title/digest/author/source-url. Wechat rejects the whole draft on oversize title/digest or a broken cover — the tool validates first; fix and re-push on failure.
 
-If the user is unhappy with an already-pushed draft and wants the same draft updated in place (not a new one), run `push --update` after re-running `build` + `upload`; it reuses the recorded `media_id` (`.bin/drafts.json`, or `--media-id` explicitly). By default `push` always creates a new draft — only update when the user asks for it.
+If the user is unhappy with an already-pushed draft and wants the same draft updated in place (not a new one), run `push --update` after re-running `build` + `upload`; it reuses the recorded `media_id` (`~/.local/state/wxmp-publisher/drafts.json`, or `--media-id` explicitly). By default `push` always creates a new draft — only update when the user asks for it.
 
 Done when: `push` prints a `media_id`.
 

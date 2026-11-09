@@ -10,9 +10,9 @@
 
 | 组件 | 位置 | 职责 |
 | --- | --- | --- |
-| skill | `skill/` | 自包含 agent 技能:SKILL.md(流程)+ WXPUSH.md(CLI 契约)+ scripts(walkthrough CLI)+ themes |
-| server | `server/` | 部署在公网服务器的 token 服务:持有 AppSecret,统一管理 access_token,代理图片上传与建草稿 |
-| engine | `engine/` | 排版引擎预构建产物(doocs/md @md/core 的 esbuild bundle)+ 构建脚本 + 归属说明 |
+| skill | `skills/publish-to-wxmp/` | 自包含 agent 技能:SKILL.md(流程)+ WXPUSH.md(CLI 契约)+ scripts(walkthrough CLI)+ themes |
+| server | `wxmp-server/` | 部署在公网服务器的 token 服务:持有 AppSecret,统一管理 access_token,代理图片上传与建草稿 |
+| engine | `skills/publish-to-wxmp/engine/` | 排版引擎预构建产物(doocs/md @md/core 的 esbuild bundle)+ 构建脚本 + 归属说明 |
 
 ## 2. 架构与信任边界
 
@@ -29,14 +29,14 @@
 
 ## 3. Skill 设计
 
-- 自包含:`skill/` 目录携带运行所需的一切(scripts、themes、契约文档);安装 = 克隆本仓库 + `install.sh` 软链/拷贝 skill 目录到 `~/.agents/skills/`(或项目 `.agents/skills/`)并落 config。README 提供 skills.sh 安装指引。
-- 运行时状态(`.bin/`:config.json、image-cache.json、output/)是机器本地的,gitignore;不随仓库分发。
-- CLI 入口 `skill/scripts/wxpush.mts`,以 `npx tsx` 运行,除 Node 外零外部依赖(引擎为预构建 bundle)。
+- 自包含:`skills/publish-to-wxmp/` 目录携带运行所需的一切(scripts、themes、契约文档);安装 = `npx skills add seven-steven/skills --skill publish-to-wxmp`(或项目 `.agents/skills/`)。
+- 用户配置在 `~/.config/wxmp-publisher/config.json`,运行时状态(image-cache、output、drafts)在 `~/.local/state/wxmp-publisher/`——均在 skill 目录之外,重装/更新 skill 不覆盖;首次运行自动从旧 `.bin/` 布局迁移。
+- CLI 入口 `skills/publish-to-wxmp/scripts/wxpush.mts`,以 `npx tsx` 运行,除 Node 外零外部依赖(引擎为预构建 bundle)。
 - 流程(SKILL.md):preflight(doctor)→ 内容适配 → build/upload/preview → push 草稿 → 回写 front-matter。
 
 ## 4. CLI 契约摘要
 
-命令:`doctor | build | upload | push | preview`(完整契约见 `skill/WXPUSH.md`)。
+命令:`doctor | build | upload | push | preview`(完整契约见 `skills/publish-to-wxmp/WXPUSH.md`)。
 
 - `build <note.md> [--theme <t>] [--out <dir>]` — markdown → 内联样式 HTML。
 - `upload <note.md>` — 图片上传微信 CDN,哈希缓存幂等,重写 run dir 里的 md/html。
@@ -47,32 +47,32 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 
 ## 5. 主题系统(完整)
 
-- 主题 = `skill/themes/<name>.yaml`,文件名即主题名。
+- 主题 = `skills/publish-to-wxmp/themes/<name>.yaml`,文件名即主题名。
 - 结构:`base_theme`(可继承 default/grace/simple/geek-black)+ `base`/`block`/`inline` 三段 CSS 属性映射。
 - `block.h1_content` 至 `block.h6_content` 可选:为标题增加独立的 `<span class="content">`,支持外层通栏背景/细线与内层文字装饰;未配置时保持原来的单层标题。
 - `renderOptions` 可选:`isMacCodeBlock`(代码块交通灯)、`isShowLineNumber`(行号)。与主题一起继承,未配置时沿用 CLI 默认值。
 - 合并语义:**深合并**——用户样式递归覆盖到基础主题上,只写要改的属性。
 - 发现机制:`build --list-themes` 列出内置 default、grace、simple、geek-black + themes/ 目录下全部 YAML。
-- geek-black 真源为 `engine/geek-black.theme.mjs`,保留原 `#nice` CSS 的双层标题,并补齐参考效果依赖的基础间距、浅灰引用和代码块背景;代码文字为深灰,行号独立内联为浅灰,不依赖参考站点的样式表。
+- geek-black 真源为 `skills/publish-to-wxmp/engine/geek-black.theme.mjs`,保留原 `#nice` CSS 的双层标题,并补齐参考效果依赖的基础间距、浅灰引用和代码块背景;代码文字为深灰,行号独立内联为浅灰,不依赖参考站点的样式表。
 - 引擎内置主题随 engine bundle 分发(不依赖 node_modules)。
 
 ## 6. Engine 设计
 
-- `engine/build.mjs`:npm 安装 `github:doocs/md#v2.x`,esbuild 打包 `@md/core`(含 shared 主题表,导出 `themeMap`)为单文件 ESM `engine/engine.mjs`(含微信输出兼容层约 1.1MB),提交入库。
+- `skills/publish-to-wxmp/engine/build.mjs`:npm 安装 `github:doocs/md#v2.x`,esbuild 打包 `@md/core`(含 shared 主题表,导出 `themeMap`)为单文件 ESM `skills/publish-to-wxmp/engine/engine.mjs`(含微信输出兼容层约 1.1MB),提交入库。
 - 运行时零构建:wxpush.mts 直接 import 相对路径的 bundle;安装 skill 不需要 npm install。
-- 构建入口注册本地内置主题,再由 `engine/local-patches.mjs` 对 bundle 应用受校验的补丁:HTML 样式属性转义、可选双层标题、代码布局内联。补丁不匹配时中止,不覆盖已有产物。
+- 构建入口注册本地内置主题,再由 `skills/publish-to-wxmp/engine/local-patches.mjs` 对 bundle 应用受校验的补丁:HTML 样式属性转义、可选双层标题、代码布局内联。补丁不匹配时中止,不覆盖已有产物。
 - CLI 保存 `postProcessHtml` 的结果(包含容器和引用链接),去掉微信不保留的 `<style>`;排版所需规则必须内联。
-- 保存前经 `engine/wechat-styles.mjs` 的 `inlineWechatStyles` 输出兼容层:用 HTML/CSS 解析器按元素作用域展开 `var(...)`(含继承、局部变量与回退),再移除 `--...` 自定义属性声明。真实草稿最小复现表明,微信会丢弃自定义属性之后的普通样式;仅浏览器预览正常不足以验证。preview/upload/push 必须共用这一产物,不能只在发送时修补。解析器一起打包进 engine,不增加 CLI 运行时依赖。
+- 保存前经 `skills/publish-to-wxmp/engine/wechat-styles.mjs` 的 `inlineWechatStyles` 输出兼容层:用 HTML/CSS 解析器按元素作用域展开 `var(...)`(含继承、局部变量与回退),再移除 `--...` 自定义属性声明。真实草稿最小复现表明,微信会丢弃自定义属性之后的普通样式;仅浏览器预览正常不足以验证。preview/upload/push 必须共用这一产物,不能只在发送时修补。解析器一起打包进 engine,不增加 CLI 运行时依赖。
 - 升级引擎 = 改版本号重跑构建脚本,重新提交产物。主题、补丁与微信输出兼容层改动也必须重建,不可只手改 bundle。
-- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 在本地开发时手动运行两者,不配置 GitHub Actions 自动测试。安装和覆盖范围见 [engine/tests/README.md](../engine/tests/README.md)。
-- 归属:引擎源自 doocs/md(Apache-2.0),见 `engine/ATTRIBUTION.md`。
+- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 在本地开发时手动运行两者,不配置 GitHub Actions 自动测试。安装和覆盖范围见 [skills/publish-to-wxmp/engine/tests/README.md](../skills/publish-to-wxmp/engine/tests/README.md)。
+- 归属:引擎源自 doocs/md(Apache-2.0),见 `skills/publish-to-wxmp/engine/ATTRIBUTION.md`。
 
 ## 7. Server 设计
 
 - Flask + gunicorn,单 worker(微信要求 token 集中管理,单进程内存缓存即可)。
 - 端点:`GET /health`、`PUT /publish/img`(multipart `image`)、`PUT /publish`(JSON: title/content/cover_base64/…)。
 - access_token 内存缓存,过期前 120s 刷新。
-- Docker:`server/Dockerfile` + `docker-compose.yml`(绑 127.0.0.1,反代终止 TLS)。
+- Docker:`wxmp-server/Dockerfile` + `docker-compose.yml`(绑 127.0.0.1,反代终止 TLS)。
 - 分发:GitHub Actions 构建发布 GHCR(tag + latest);服务器零构建。文档保留本地 build fallback。
 
 安全设计独立成篇:[security.md](security.md)。
@@ -82,9 +82,10 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 ```
 README.md  LICENSE  AGENTS.md
 docs/            spec.md, security.md, agents/
-skill/           SKILL.md, WXPUSH.md, scripts/, themes/, config.example.json, install.sh
-server/          server.py, Dockerfile, docker-compose.yml, .env.example, deploy.md
-engine/          build.mjs, engine.mjs(产物), ATTRIBUTION.md
+skills/publish-to-wxmp/    SKILL.md, WXPUSH.md, README.md, scripts/, themes/, engine/, config.example.json
+skills/publish-to-blog/    SKILL.md, README.md, config.example.json
+wxmp-server/               server.py, Dockerfile, docker-compose.yml, .env.example, deploy.md
+skills/publish-to-wxmp/engine/          build.mjs, engine.mjs(产物), ATTRIBUTION.md
 .github/         workflows/docker.yml
 .scratch/        wayfinder 地图与决策票(过程工件)
 ```

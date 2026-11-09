@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./engine/tests/browser",
+  testDir: "./skills/publish-to-wxmp/engine/tests/browser",
   testMatch: "*.spec.mjs",
   fullyParallel: true,
   workers: 2,

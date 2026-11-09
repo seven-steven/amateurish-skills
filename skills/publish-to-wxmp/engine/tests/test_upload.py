@@ -33,7 +33,7 @@ class UploadTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory(prefix="wxmp-upload-test-") as directory:
             project = Path(directory)
-            shutil.copytree(ROOT / "skill/scripts", project / "skill/scripts")
+            shutil.copytree(ROOT / "scripts", project / "scripts")
             (project / "engine").mkdir()
             shutil.copy2(ROOT / "engine/engine.mjs", project / "engine/engine.mjs")
             note = project / "note.md"
@@ -44,8 +44,10 @@ class UploadTests(unittest.TestCase):
             worker.start()
             try:
                 env = {**os.environ, "WXMP_API_BASE": f"http://127.0.0.1:{api.server_port}",
-                       "WXMP_API_TOKEN": "test-api-token"}
-                cli = ["node", str(project / "skill/scripts/wxpush.mts")]
+                       "WXMP_API_TOKEN": "test-api-token",
+                       "WXMP_STATE_DIR": str(project / ".bin"),
+                       "WXMP_CONFIG_DIR": str(project / "config.json")}
+                cli = ["node", str(project / "scripts/wxpush.mts")]
                 for command in ("build", "upload"):
                     result = subprocess.run(cli + [command, str(note)], cwd=project,
                                             env=env, capture_output=True, text=True, timeout=15)
@@ -54,7 +56,7 @@ class UploadTests(unittest.TestCase):
                 api.shutdown()
                 api.server_close()
                 worker.join(timeout=5)
-            document = Document((project / "skill/.bin/output/latest/article.html").read_text())
+            document = Document((project / ".bin/output/latest/article.html").read_text())
             self.assertEqual(requests, ["/publish/img"])
             self.assertEqual(document.first("img").attrs["src"], cdn)
             self.assertEqual(document.first("h2").style["background"], "#000000")
