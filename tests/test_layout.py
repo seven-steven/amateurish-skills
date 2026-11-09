@@ -76,14 +76,18 @@ class LayoutIntegrityTests(unittest.TestCase):
         either named in a script or delegated to via a runner script (no CI-only suites,
         which is how the server rename slipped through)."""
         pkg = (ROOT / "package.json").read_text(encoding="utf-8")
-        runners = "".join(p.read_text(encoding="utf-8")
-                           for p in ROOT.glob("**/run-tests.sh") if "node_modules" not in p.parts)
+        # collect every "discover -s <dir>" target across npm scripts and runner scripts
+        wired = set(re.findall(r"discover -s ([\w./-]+)", pkg))
+        runners = [p for p in ROOT.glob("**/run-tests.sh") if "node_modules" not in p.parts]
+        for r in runners:
+            for d in re.findall(r"discover -s \"?\$?\{?DIR\}?/([\w./-]+)", r.read_text(encoding="utf-8")):
+                wired.add((r.parent / d).relative_to(ROOT).as_posix())
+            wired.update(re.findall(r"discover -s ([\w./-]+)", r.read_text(encoding="utf-8")))
         test_dirs = {p.parent.relative_to(ROOT).as_posix()
                      for p in ROOT.glob("**/test_*.py") if "node_modules" not in p.parts}
         self.assertTrue(test_dirs, "sanity: no python tests found")
         for d in sorted(test_dirs):
-            self.assertTrue(d in pkg or d in runners,
-                            f"test dir '{d}' is not run by any npm script or runner")
+            self.assertIn(d, wired, f"test dir '{d}' is not run by any npm script or runner")
 
 
 if __name__ == "__main__":
