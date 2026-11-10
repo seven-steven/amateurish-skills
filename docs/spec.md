@@ -32,7 +32,7 @@
 - 自包含:`skills/publish-to-wxmp/` 目录携带运行所需的一切(scripts、themes、契约文档);安装 = `npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp`(或项目 `.agents/skills/`)。
 - 用户配置遵循仓库[配置约定](../README.md#配置约定),唯一位置为 `~/.config/skills/publish-to-wxmp/config.json`;不支持配置路径覆盖或旧配置读取/迁移。缺文件使用空配置,不可读或 JSON 损坏则报告路径与原因并中止。运行时状态(image-cache、output、drafts)仍在 `~/.local/state/wxmp-publisher/`,保留 `WXMP_STATE_DIR` 覆盖及从旧 `.bin/` 复制缺失状态的行为。配置和状态均在 skill 目录之外,重装/更新 skill 不覆盖。
 - CLI 入口 `skills/publish-to-wxmp/scripts/wxpush.mts`,Node ≥22.20 可直接运行,也可用 `npx tsx`。macOS/无桌面 Linux 为正式平台;安装目录包含预构建引擎、图表 WASM 和中文字体,运行时不需要 npm install、系统图像库、浏览器或宿主字体。
-- 流程(SKILL.md):preflight(doctor)→ 内容适配 → build/upload/preview → push 草稿 → 回写 front-matter。
+- 流程:preflight(doctor)→ 内容适配 → build/upload/preview → push 草稿 → 返回精简推送回执(字段与异常语义见 [SKILL.md](../skills/publish-to-wxmp/SKILL.md#5-close))。原笔记保持只读,是否及如何回写由笔记侧规则决定。
 
 ## 4. CLI 契约摘要
 
