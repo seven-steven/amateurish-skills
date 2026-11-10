@@ -26,11 +26,11 @@ Decisions autonomous; body copy stays zh-CN and near-verbatim. Adjustments allow
 - `digest` ≤ 120 chars: one sentence the reader gains.
 - **Note references**: Adapt every reference to a note in the article copy, including external note URLs, wiki links, relative note paths, and wording such as “see this note”. Replace it with a confirmed published Wechat article URL for the referenced content, or rewrite the surrounding passage in context so it stands alone without the note reference. When no such URL is known, rewrite.
 - **Web references**: Preserve non-note web references and their surrounding prose. Keep Markdown links; for bare non-Wechat URLs or links whose label is the URL, use a short contextual label instead (`[label](URL)`). `build` converts these links to numbered endnotes and deduplicates by URL; `mp.weixin.qq.com` article links remain clickable.
-- **Diagrams**: Rewrite ASCII/Unicode art and prose-only code blocks as rendered diagrams following [`DIAGRAMS.md`](DIAGRAMS.md). Use the same rendering path for existing diagram-source blocks, such as Mermaid.
-- **Code**: Preserve actual source code, commands, configuration, and verbatim logs/output; classify by content, not by a `text` label or missing language tag.
+- **Diagrams**: Render only the note's existing fenced `mermaid` blocks following [`DIAGRAMS.md`](DIAGRAMS.md).
+- **Code**: Preserve actual source code, commands, configuration, and verbatim logs/output.
 - Front-matter and scaffolding are dropped (the tool handles front-matter reads).
 
-Done when: an adapted Markdown publishing copy exists outside the installed skill directory, every note reference is adapted, non-Wechat web references in prose have link labels distinct from their URLs, and diagram rewriting meets step 1 of `DIAGRAMS.md` when applicable. Keep this copy as the input to all subsequent CLI commands.
+Done when: an adapted Markdown publishing copy exists outside the installed skill directory, every note reference is adapted, and non-Wechat web references in prose have link labels distinct from their URLs. Keep this copy as the input to all subsequent CLI commands.
 
 ### 3. Build, upload, preview
 
