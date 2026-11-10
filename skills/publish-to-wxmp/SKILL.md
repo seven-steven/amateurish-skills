@@ -20,6 +20,10 @@ Done when: `doctor` passes.
 
 ### 2. Adapt the note — content for Wechat reading
 
+Create a unique task workspace at `<system TMP>/.skills/publish-to-wxmp/<task-id>/`, resolving system TMP with Node's `os.tmpdir()`. Store the adapted Markdown publishing copy, generated covers, and other preparation intermediates in this workspace. CLI configuration and runtime state keep their existing locations per WXPUSH.
+
+Resolve local image and cover references against the original note's directory; use absolute paths in the publishing copy or copy the assets into the workspace and adjust their references. Keep the original assets in place.
+
 Decisions autonomous; body copy stays zh-CN and near-verbatim. Adjustments allowed, exhaustive:
 
 - `title` ≤ 64 chars from front-matter or the H1 (rephrase for a Wechat audience if too plain).
@@ -30,7 +34,7 @@ Decisions autonomous; body copy stays zh-CN and near-verbatim. Adjustments allow
 - **Code**: Preserve actual source code, commands, configuration, and verbatim logs/output.
 - Front-matter and scaffolding are dropped (the tool handles front-matter reads).
 
-Done when: an adapted Markdown publishing copy exists outside the installed skill directory, every note reference is adapted, and non-Wechat web references in prose have link labels distinct from their URLs. Keep this copy as the input to all subsequent CLI commands.
+Done when: the adapted Markdown publishing copy exists in the task workspace, its local image and cover references resolve, every note reference is adapted, and non-Wechat web references in prose have link labels distinct from their URLs. Reuse this workspace and copy for all subsequent CLI commands and revisions within the task.
 
 ### 3. Build, upload, preview
 
@@ -42,7 +46,7 @@ Done when: the user confirms the rendered article.
 
 `push` with title/digest/author/source-url. Wechat rejects the whole draft on oversize title/digest or a broken cover — the tool validates first; fix and re-push on failure.
 
-If the user is unhappy with an already-pushed draft and wants the same draft updated in place (not a new one), run `push --update` after re-running `build` + `upload`; it reuses the recorded `media_id` (`~/.local/state/wxmp-publisher/drafts.json`, or `--media-id` explicitly). By default `push` always creates a new draft — only update when the user asks for it.
+If the user is unhappy with an already-pushed draft and wants the same draft updated in place (not a new one), run `push --update` after re-running `build` + `upload`; it reuses the recorded `media_id` (`~/.local/state/wxmp-publisher/drafts.json`, or `--media-id` explicitly). The registry is keyed by the publishing copy's absolute path: when updating from a new task workspace, pass the existing draft's `--media-id` explicitly. By default `push` always creates a new draft — only update when the user asks for it.
 
 Done when: `push` prints a `media_id`.
 
