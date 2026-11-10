@@ -11,6 +11,7 @@ export default defineConfig({
   outputDir: "test-results",
   use: {
     browserName: "chromium",
+    channel: "chrome",
     headless: true,
     launchOptions: process.env.BROWSER_EXECUTABLE_PATH
       ? { executablePath: process.env.BROWSER_EXECUTABLE_PATH }

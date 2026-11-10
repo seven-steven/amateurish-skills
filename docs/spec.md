@@ -64,7 +64,7 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 - CLI 保存 `postProcessHtml` 的结果(包含容器和引用链接),去掉微信不保留的 `<style>`;排版所需规则必须内联。
 - 保存前经 `skills/publish-to-wxmp/engine/wechat-styles.mjs` 的 `inlineWechatStyles` 输出兼容层:用 HTML/CSS 解析器按元素作用域展开 `var(...)`(含继承、局部变量与回退),再移除 `--...` 自定义属性声明。真实草稿最小复现表明,微信会丢弃自定义属性之后的普通样式;仅浏览器预览正常不足以验证。preview/upload/push 必须共用这一产物,不能只在发送时修补。解析器一起打包进 engine,不增加 CLI 运行时依赖。
 - 升级引擎 = 改版本号重跑构建脚本,重新提交产物。主题、补丁与微信输出兼容层改动也必须重建,不可只手改 bundle。
-- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用 Chromium 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 同时覆盖类型检查、布局、引擎、服务端与浏览器测试;独立测试 workflow 在 macOS/Linux 上执行同一命令。安装和覆盖范围见 [skills/publish-to-wxmp/engine/tests/README.md](../skills/publish-to-wxmp/engine/tests/README.md)。
+- 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用主机已安装的 Google Chrome 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 同时覆盖类型检查、布局、引擎、服务端与浏览器测试;独立测试 workflow 在 macOS/Linux 上执行同一命令。安装和覆盖范围见 [skills/publish-to-wxmp/engine/tests/README.md](../skills/publish-to-wxmp/engine/tests/README.md)。
 - 图表:独立、锁依赖的 Pele/resvg-wasm bundle 加随包完整 Noto 简体中文字体,离线成图。先由 agent 将 ASCII/说明性文本改写为 Mermaid,CLI 只做确定性渲染;不调用模型。全部 Pele 内置类型走统一入口,首版仅支持自包含文字/形状。图内网页链接移至图注并沿用脚注;外部图片、自定义图标、公式、缺字、可检测裁切及超限均使构建失败。保留 Mermaid、SVG、PNG,发布只嵌入 PNG;手机预览和用户确认仍是最终验收。
 - 归属:排版引擎源自 doocs/md(Apache-2.0);图表发行物同时保留 Pele 的 MIT/ISC、resvg 的 MPL/对应源码信息与字体 OFL,见 `skills/publish-to-wxmp/engine/ATTRIBUTION.md`。
 

@@ -4,15 +4,14 @@
 
 ## 运行
 
-要求 Node ≥22.20、Python 3。Playwright 仅为开发依赖,发布工具的运行时仍无需 `npm install`。
+要求 Node ≥22.20、Python 3 和开发主机已安装的 Google Chrome 稳定版。Playwright 仅为开发依赖,发布工具的运行时仍无需 `npm install`。
 
 ```bash
 npm ci
-npx playwright install chromium
 npm test
 ```
 
-Linux 本地开发环境首次安装浏览器及系统依赖时使用 `npx playwright install --with-deps chromium`。
+Playwright 默认通过 `channel: "chrome"` 定位所在主机标准安装位置的 Google Chrome;不同 macOS/Linux 开发主机使用各自的安装,无需在仓库中写死浏览器路径或下载 Playwright Chromium。
 
 也可分别运行:
 
@@ -21,11 +20,13 @@ npm run test:engine    # Node 单测 + 实际 CLI 输出的 HTML 解析测试,�
 npm run test:browser   # Playwright 计算样式和布局测试
 ```
 
-若本机已有 Chrome,可跳过 Chromium 下载:
+Chrome 安装在非标准位置时,先在执行测试的主机上定位它,再用 `BROWSER_EXECUTABLE_PATH` 覆盖默认查找(替换为该主机的实际绝对路径):
 
 ```bash
-BROWSER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" npm test
+BROWSER_EXECUTABLE_PATH="/absolute/path/to/google-chrome" npm test
 ```
+
+若找不到 Chrome,先核对安装位置和路径覆盖;确认缺失后报告环境阻塞,等待用户提供可用的 Chrome。不要自动安装浏览器或回退到 Playwright Chromium。
 
 ## 覆盖边界
 
@@ -37,11 +38,11 @@ BROWSER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google C
 | `test_artifacts.py` | 构建归属与内容指纹、显式输出目录、重复上传、原样代码保留、模拟草稿消费同一 HTML,错误输入在网络请求前被拒绝 |
 | `test_diagrams.py` | 真实 PNG 解码与像素、中文标签/连线、代表性多类型/多图、稳定重建、图表链接转脚注、错误/资源/公式/字形限制、安装目录无 npm 包的离线成图及资产损坏诊断 |
 | `browser/diagrams.spec.mjs` | 375px/768px 下加载实际 PNG,检查解码、非空像素、页面宽度,保存中文多图预览截图供视觉核对 |
-| `browser/rendering.spec.mjs` | Chromium 实际计算样式:黑底白字圆角标题及其加粗文字、通栏背景、灰底引用、正文间距、深灰代码文字/浅灰行号与内部横向滚动;375px/768px 两种宽度;全部四个内置主题 |
+| `browser/rendering.spec.mjs` | Google Chrome 实际计算样式:黑底白字圆角标题及其加粗文字、通栏背景、灰底引用、正文间距、深灰代码文字/浅灰行号与内部横向滚动;375px/768px 两种宽度;全部四个内置主题 |
 
 HTML 解析测试和浏览器测试共享 `fixtures/geek-black.md`。浏览器只载入真实 CLI 保存的 HTML,不附加站点 CSS,并禁用网络请求;构建产物必须不依赖 `<style>` 或外链样式表。临时笔记、自定义主题、配置、运行时状态与输出目录均隔离,不会改动用户最近构建或草稿记录。
 
-浏览器测试主要断言计算样式及几何约束,不使用易受系统字体影响的像素快照。失败时保留截图和 trace 于 `test-results/`。GitHub Actions 在 macOS/Linux、Node 22 上执行同一 `npm test` 全套测试;本地通过不代表远端矩阵已经执行通过。
+浏览器测试主要断言计算样式及几何约束,不使用易受系统字体影响的像素快照。失败时保留截图和 trace 于 `test-results/`。GitHub Actions 在 macOS/Linux、Node 22 上使用 runner 预装的 Google Chrome 执行同一 `npm test` 全套测试;本地通过不代表远端矩阵已经执行通过。
 
 ## 主题选择与参考图验收
 

@@ -4,6 +4,7 @@
 
 - Follow TDD method
 - Run `npm test` after any code change; it is the same suite CI runs. Every test suite in the repo must be reachable from `npm test`
+- Playwright tests use the development host's installed Google Chrome. For browser setup, nonstandard paths, or a missing browser, follow [the test instructions](skills/publish-to-wxmp/engine/tests/README.md#运行).
 
 ## Agent skills
 
