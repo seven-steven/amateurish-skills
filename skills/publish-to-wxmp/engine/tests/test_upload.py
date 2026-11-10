@@ -47,7 +47,7 @@ class UploadTests(unittest.TestCase):
                 env = {**os.environ, "WXMP_API_BASE": f"http://127.0.0.1:{api.server_port}",
                        "WXMP_API_TOKEN": "test-api-token",
                        "WXMP_STATE_DIR": str(project / ".bin"),
-                       "WXMP_CONFIG_DIR": str(project / "config.json")}
+                       "HOME": str(project)}
                 cli = ["node", str(project / "scripts/wxpush.mts")]
                 for command in ("build", "upload"):
                     result = subprocess.run(cli + [command, str(note)], cwd=project,

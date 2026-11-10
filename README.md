@@ -23,7 +23,14 @@ npx skills add seven-steven/amateurish-skills --skill publish-to-blog
 - [publish-to-wxmp 配置](skills/publish-to-wxmp/README.md#配置)(需配套服务端)
 - [publish-to-blog 配置](skills/publish-to-blog/README.md#配置)
 
-用户配置存放在 `~/.config/<skill>/`,与 skill 目录分离——重装或更新 skill 不会覆盖本地配置。
+## 配置约定
+
+本仓库维护的 skills 将自身的持久化用户设置统一存放在 `~/.config/skills/<skill-name>/config.json`,其中 `<skill-name>` 取 `SKILL.md` frontmatter 的 `name`。
+
+- `~` 为当前用户的 home;路径固定,不受 `XDG_CONFIG_HOME` 或其他配置路径环境变量影响,也不随项目或 agent 改变。
+- 只支持新位置,旧配置不读取、不回退、不自动迁移,也不删除或修改。只存在旧配置时视为缺配置,初始化行为见各 skill 的说明。
+- 各 skill 保留自己的字段、结构和默认值;没有配置需求的 skill 无需创建空文件。
+- 配置与安装目录分离,重装或更新 skill 不覆盖用户设置。此约定不改变运行状态、缓存、日志、主题、专用凭证存储或目标项目配置的位置。
 
 ## 服务端
 

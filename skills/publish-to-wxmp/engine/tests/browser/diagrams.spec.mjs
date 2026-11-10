@@ -75,7 +75,7 @@ gantt
 `);
   execFileSync(process.execPath, [path.join(root, "scripts/wxpush.mts"), "build", note,
     "--theme", "default", "--out", path.join(directory, "out")], {
-    env: { ...process.env, WXMP_STATE_DIR: path.join(directory, "state"), WXMP_CONFIG_DIR: path.join(directory, "config.json") },
+    env: { ...process.env, HOME: directory, WXMP_STATE_DIR: path.join(directory, "state") },
     timeout: 30000,
   });
   html = readFileSync(path.join(directory, "out/article.html"), "utf8");

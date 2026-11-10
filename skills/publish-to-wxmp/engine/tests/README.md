@@ -36,11 +36,12 @@ BROWSER_EXECUTABLE_PATH="/absolute/path/to/google-chrome" npm test
 | `test_rendering.py` | 真实 `wxpush build` 输出经 HTMLParser 解析后仍有完整样式;四个内置主题无 CSS 自定义属性或未解析的变量引用;自定义主题变量、局部覆盖、继承与嵌套回退;正文代码中的 `var(...)` 不被替换;双层标题;正文和引用间距;容器与参考链接;内联代码布局;YAML 主题继承和含引号/`&`/`<`/`>` 的字体名往返 |
 | `test_upload.py` | 真实 `build → upload` 经本地 HTTP 图片服务后,含 `&` 的图片地址仍能正确重写为 CDN 地址,且主题样式不丢失 |
 | `test_artifacts.py` | 构建归属与内容指纹、显式输出目录、重复上传、原样代码保留、模拟草稿消费同一 HTML,错误输入在网络请求前被拒绝 |
+| `test_config.py` | 临时 HOME 下通过真实 CLI 验证唯一配置地址、旧路径与路径环境变量被忽略、缺配置默认值、JSON/权限错误及诊断路径;配置不迁移而旧运行状态仍复制 |
 | `test_diagrams.py` | 真实 PNG 解码与像素、中文标签/连线、代表性多类型/多图、稳定重建、图表链接转脚注、错误/资源/公式/字形限制、安装目录无 npm 包的离线成图及资产损坏诊断 |
 | `browser/diagrams.spec.mjs` | 375px/768px 下加载实际 PNG,检查解码、非空像素、页面宽度,保存中文多图预览截图供视觉核对 |
 | `browser/rendering.spec.mjs` | Google Chrome 实际计算样式:黑底白字圆角标题及其加粗文字、通栏背景、灰底引用、正文间距、深灰代码文字/浅灰行号与内部横向滚动;375px/768px 两种宽度;全部四个内置主题 |
 
-HTML 解析测试和浏览器测试共享 `fixtures/geek-black.md`。浏览器只载入真实 CLI 保存的 HTML,不附加站点 CSS,并禁用网络请求;构建产物必须不依赖 `<style>` 或外链样式表。临时笔记、自定义主题、配置、运行时状态与输出目录均隔离,不会改动用户最近构建或草稿记录。
+HTML 解析测试和浏览器测试共享 `fixtures/geek-black.md`。浏览器只载入真实 CLI 保存的 HTML,不附加站点 CSS,并禁用网络请求;构建产物必须不依赖 `<style>` 或外链样式表。CLI 测试通过临时 `HOME` 隔离用户配置,不再用 `WXMP_CONFIG_DIR` 重定向。临时笔记、自定义主题、运行时状态与输出目录也均隔离,不会读取用户实际配置或改动用户最近构建、草稿记录。
 
 浏览器测试主要断言计算样式及几何约束,不使用易受系统字体影响的像素快照。失败时保留截图和 trace 于 `test-results/`。GitHub Actions 在 macOS/Linux、Node 22 上使用 runner 预装的 Google Chrome 执行同一 `npm test` 全套测试;本地通过不代表远端矩阵已经执行通过。
 

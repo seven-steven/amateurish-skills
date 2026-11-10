@@ -20,7 +20,11 @@ All other decisions are autonomous; only the publish gate asks the user.
 
 ### 1. Load config and check state
 
-Read config from `~/.config/publish-to-blog/config.json` (expand `~`) for `blog_repo_local_path` and `blog_site_url`. If the file is missing, create it by copying `config.example.json` next to this SKILL.md to that path, show it to the user, and have them fill in the two values before proceeding. Read the note in full. Check `git -C <blog_repo> status --porcelain`; if uncommitted work exists, report and ask before proceeding.
+Read `blog_repo_local_path` and `blog_site_url` from `~/.config/skills/publish-to-blog/config.json` (expand `~` to the current user's home). This is the only configuration source, independent of `XDG_CONFIG_HOME`; leave legacy configuration files untouched, without reading or migrating them.
+
+If the file is missing, create its parent directories and copy `config.example.json` next to this SKILL.md to that path without overwriting an existing file. Show it to the user and have them fill in the two values before proceeding. If reading, JSON parsing, or creation fails, stop and report the path and cause; preserve any existing file.
+
+Read the note in full. Check `git -C <blog_repo> status --porcelain`; if uncommitted work exists, report and ask before proceeding.
 
 Done when: config resolved, note read, blog repo state known.
 

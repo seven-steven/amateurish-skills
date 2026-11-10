@@ -16,7 +16,6 @@ class CLIEnvironment(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="wxmp-artifacts-")
         self.addCleanup(self.temp.cleanup)
         self.directory = Path(self.temp.name)
-        (self.directory / "config.json").write_text("{}")
         self.note = self.directory / "note.md"
         self.note.write_text("# 发布测试\n\n![配图](cover.png)\n\n```text\ncover.png 是日志中的路径\n```\n", encoding="utf-8")
         (self.directory / "cover.png").write_bytes(b"cover-bytes")
@@ -44,7 +43,7 @@ class CLIEnvironment(unittest.TestCase):
         self.addCleanup(self.close_api)
         self.env = {**os.environ, "WXMP_API_BASE": f"http://127.0.0.1:{self.api.server_port}",
                     "WXMP_STATE_DIR": str(self.directory / "state"),
-                    "WXMP_CONFIG_DIR": str(self.directory / "config.json")}
+                    "HOME": str(self.directory)}
 
     def close_api(self):
         self.api.shutdown()

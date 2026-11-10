@@ -87,7 +87,7 @@ class RenderingTests(unittest.TestCase):
                  "--theme", theme, "--out", str(out)],
                 cwd=project, capture_output=True, text=True, timeout=15,
                 env={**os.environ, "WXMP_STATE_DIR": str(directory / "state"),
-                     "WXMP_CONFIG_DIR": str(directory / "config.json")},
+                     "HOME": str(directory)},
 
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

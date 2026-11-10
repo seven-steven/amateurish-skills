@@ -13,7 +13,7 @@ npx skills add seven-steven/amateurish-skills --skill publish-to-blog
 ## 配置
 
 ```bash
-# ~/.config/publish-to-blog/config.json
+# ~/.config/skills/publish-to-blog/config.json
 {
   "blog_repo_local_path": "~/path/to/your/blog",
   "blog_site_url": "https://your-blog.example.com"
@@ -22,7 +22,8 @@ npx skills add seven-steven/amateurish-skills --skill publish-to-blog
 
 - `blog_repo_local_path`:博客仓库本地路径(`~` 会展开),须为干净的 git 工作区。
 - `blog_site_url`:站点地址,用于发布后回链。
-- 文件不存在时,skill 会引导按 `config.example.json` 生成;配置在 skill 目录之外,重装/更新不覆盖。
+- 仅支持上述固定位置,不受 `XDG_CONFIG_HOME` 影响;旧配置不读取、不回退、不自动迁移。
+- 文件不存在时,agent 创建父目录并按 `config.example.json` 生成,等待用户填写;不可读、JSON 损坏或创建失败则报告路径和原因并中止。配置在 skill 目录之外,重装/更新不覆盖。
 
 ## 使用
 

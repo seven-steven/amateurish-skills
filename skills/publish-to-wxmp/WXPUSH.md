@@ -2,7 +2,7 @@
 
 `npx tsx <skill>/scripts/wxpush.mts` — push a Markdown note into the Wechat Official Account draft box. Rendering runs offline on Node ≥22.20, with no runtime npm install: prebuilt engines, WASM and a Chinese font are included in the skill. Official platforms: macOS and headless Linux.
 
-Env: `WXMP_API_BASE`(token 服务地址,如 `https://wx.example.com`)必需;`WXMP_API_TOKEN`(与服务端 WX_TOKEN 一致)必需。
+Env: `WXMP_API_BASE`(token 服务地址,如 `https://wx.example.com`,也可由配置的 `api_base` 提供);连接受保护的服务端时设置 `WXMP_API_TOKEN`(与服务端 WX_TOKEN 一致)。离线构建无需这两项。
 
 ## Commands
 
@@ -27,9 +27,13 @@ Env: `WXMP_API_BASE`(token 服务地址,如 `https://wx.example.com`)必需;`WXM
 - 限制:单图源码 50,000 字符、流程图 1,000 条边、任一边长 ≤4096 SVG 像素、栅格像素 ≤8,000,000、PNG <10MB。超限则构建失败。自动校验不替代手机预览确认。
 - 分发许可及对应源码获取见 [engine/ATTRIBUTION.md](engine/ATTRIBUTION.md)。Ctrl-C 退出。
 
-## Config `~/.config/wxmp-publisher/config.json`
+## Config `~/.config/skills/publish-to-wxmp/config.json`
 
-`{"api_base": "...", "author": "...", "theme": "default", "cover_dir": "..."}` — `api_base` 必填(env `WXMP_API_BASE` 可覆盖)。缺失时从 `config.example.json` 引导生成。
+`{"api_base": "...", "author": "...", "theme": "default", "cover_dir": "..."}` — 各字段可选;需要连接服务端时提供 `api_base` 或 env `WXMP_API_BASE`。
+
+这是唯一配置位置,`~` 为当前用户的 home,不受 `XDG_CONFIG_HOME` 影响。`WXMP_CONFIG_DIR` 已移除;旧位置 `~/.config/wxmp-publisher/config.json` 和 skill 内 `.bin/config.json` 不读取、不回退、不自动迁移,旧文件保持原样。
+
+文件不存在时 CLI 使用空配置,保留默认值和非路径环境变量,不生成配置文件;操作缺少必要设置时再报错。需持久化设置时可参考 `config.example.json` 在新位置自行创建。配置不可读或 JSON 损坏时,需要配置的操作报告具体路径和原因并中止,不静默降级。
 
 ## Draft registry `~/.local/state/wxmp-publisher/drafts.json`
 
@@ -56,4 +60,4 @@ inline: {}
 - Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认值。
 - 封面必填:`wechat.cover`(相对笔记目录)→ `cover_dir` 中按标题 slug 匹配 → 笔记首图(警告)。
 - 微信限制:正文图片 <10MB PNG/JPG/GIF;封面 <2MB;title ≤64 字;digest ≤120 字——工具先本地校验再请求。
-- 用户配置在 `~/.config/wxmp-publisher/`,运行时状态(缓存、output、drafts)在 `~/.local/state/wxmp-publisher/`——均在 skill 目录之外,重装/更新 skill 不受影响;首次运行自动从旧 `.bin/` 布局迁移。
+- 用户配置见上文;运行时状态(缓存、output、drafts)仍在 `~/.local/state/wxmp-publisher/`,可用 `WXMP_STATE_DIR` 覆盖。两者均在 skill 目录之外,重装/更新 skill 不受影响。旧 `.bin/` 中仅 `image-cache.json`、`drafts.json` 和 `output/` 在对应目标缺失时复制到状态目录,保留源文件。

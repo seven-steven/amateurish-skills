@@ -14,7 +14,7 @@ The tool layer is [`WXPUSH.md`](WXPUSH.md) — read it first; its command contra
 
 ### 1. Preflight
 
-Run `doctor`. If it fails, fix the environment (env vars, `~/.config/wxmp-publisher/config.json`, server reachability) before anything else.
+Run `doctor`. If it fails, fix the environment (env vars, `~/.config/skills/publish-to-wxmp/config.json`, server reachability) before anything else.
 
 Done when: `doctor` passes.
 

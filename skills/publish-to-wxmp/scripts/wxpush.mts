@@ -27,7 +27,7 @@ function pathToFileURL(p: string): string {
 }
 
 // user config and runtime state live OUTSIDE the skill dir so `skills add` reinstalls never clobber them
-const CONFIG = envHome("WXMP_CONFIG_DIR") ?? path.join(os.homedir(), ".config", "wxmp-publisher", "config.json");
+const CONFIG = path.join(os.homedir(), ".config", "skills", "publish-to-wxmp", "config.json");
 const RUNTIME = envHome("WXMP_STATE_DIR") ?? path.join(os.homedir(), ".local", "state", "wxmp-publisher");
 function envHome(k: string): string | undefined {
   const v = process.env[k]?.trim();
@@ -39,15 +39,11 @@ const IMAGE_CACHE = path.join(RUNTIME, "image-cache.json");
 const DRAFTS = path.join(RUNTIME, "drafts.json");
 const THEMES_DIR = path.join(HERE, "..", "themes");
 
-// one-time migration from the legacy skill-local `.bin/` layout
+// Migrate runtime state only from the legacy skill-local `.bin/` layout.
 const LEGACY_BIN = path.join(HERE, "..", ".bin");
 function migrateLegacy(): void {
   if (!fs.existsSync(LEGACY_BIN)) return;
-  fs.mkdirSync(path.dirname(CONFIG), { recursive: true });
   fs.mkdirSync(RUNTIME, { recursive: true });
-  const legacyConfig = path.join(LEGACY_BIN, "config.json");
-  if (fs.existsSync(legacyConfig) && !fs.existsSync(CONFIG))
-    fs.copyFileSync(legacyConfig, CONFIG);
   for (const name of ["image-cache.json", "drafts.json", "output"]) {
     const src = path.join(LEGACY_BIN, name);
     if (fs.existsSync(src) && !fs.existsSync(path.join(RUNTIME, name)))
@@ -65,14 +61,19 @@ type Theme = {
 type Config = { api_base?: string; author?: string; theme?: string; cover_dir?: string };
 
 function loadConfig(): Config {
-  return fs.existsSync(CONFIG) ? JSON.parse(fs.readFileSync(CONFIG, "utf8")) : {};
+  try {
+    return JSON.parse(fs.readFileSync(CONFIG, "utf8"));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return {};
+    die(`cannot load config ${CONFIG}: ${(error as Error).message}`);
+  }
 }
 function env(k: string): string | undefined {
   return process.env[k]?.trim() || undefined;
 }
 function apiBase(): string {
   const base = env("WXMP_API_BASE") || loadConfig().api_base;
-  if (!base) die("no API base: set WXMP_API_BASE or api_base in ~/.config/wxmp-publisher/config.json");
+  if (!base) die(`no API base: set WXMP_API_BASE or api_base in ${CONFIG}`);
   return base.replace(/\/+$/, "");
 }
 function authHeaders(): Record<string, string> {
@@ -286,7 +287,7 @@ async function main() {
       checkDiagramAssets();
       console.log("diagrams: ok (offline renderer, WASM and Chinese font)");
     } catch (error) { console.log(`diagrams: ${(error as Error).message}`); ok = false; }
-    console.log(`api_base: ${base ?? "MISSING (set WXMP_API_BASE or ~/.config/wxmp-publisher/config.json)"}`); ok &&= !!base;
+    console.log(`api_base: ${base ?? `MISSING (set WXMP_API_BASE or api_base in ${CONFIG})`}`); ok &&= !!base;
     if (base) {
       try {
         const res = await fetch(`${base.replace(/\/+$/, "")}/health`);

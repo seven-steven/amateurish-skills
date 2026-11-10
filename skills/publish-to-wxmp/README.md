@@ -19,13 +19,14 @@ npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp
 ## 配置
 
 ```bash
-# ~/.config/wxmp-publisher/config.json
+# ~/.config/skills/publish-to-wxmp/config.json
 { "api_base": "https://wx.example.com", "author": "", "theme": "default", "cover_dir": "" }
 export WXMP_API_TOKEN=<与服务端 WX_TOKEN 一致>
 ```
 
-- `api_base` 必填(也可用 env `WXMP_API_BASE` 覆盖),其余可选;各字段说明见 [WXPUSH.md](WXPUSH.md)。
-- 配置与运行时状态(image-cache、output、草稿登记)都在 skill 目录之外,重装/更新 skill 不会覆盖;首次运行自动从旧 `.bin/` 布局迁移。
+- 需要连接服务端时提供 `api_base` 或 env `WXMP_API_BASE`,其余可选;各字段与缺配置行为见 [WXPUSH.md](WXPUSH.md)。
+- 仅支持上述固定位置,不受 `XDG_CONFIG_HOME` 影响;`WXMP_CONFIG_DIR` 已移除,旧配置不读取、不回退、不自动迁移。
+- 配置与运行时状态(image-cache、output、草稿登记)都在 skill 目录之外,重装/更新 skill 不会覆盖;只有运行时状态保留从旧 `.bin/` 布局迁移的行为。
 
 ## 验证
 

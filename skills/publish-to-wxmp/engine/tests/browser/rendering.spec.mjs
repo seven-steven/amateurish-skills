@@ -22,7 +22,7 @@ test.beforeAll(() => {
       "--theme", theme, "--out", out,
     ], { cwd: root, timeout: 15000, env: { ...process.env,
       WXMP_STATE_DIR: path.join(directory, "state"),
-      WXMP_CONFIG_DIR: path.join(directory, "config.json"),
+      HOME: directory,
     } });
     articles.set(theme, readFileSync(path.join(out, "article.html"), "utf8"));
   }
