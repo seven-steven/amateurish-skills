@@ -2,6 +2,7 @@
   "sourceCommit": "5052bf4baab3734b7c819c96464948929459de51",
   "theme": "default",
   "referenceTimeMs": 1767225600000,
+  "timezone": "Asia/Shanghai",
   "assets": {
     "72b3283160f13a1561bb.mmd": "a5fcd5f7aacb65f809d5553d5e87db580f32010447100e268770e42c882f856d",
     "72b3283160f13a1561bb.png": "d1376cc39a2bd4d6eae04b4cdc289b6d540e130b960b3abe7c26d6105e2a7992",

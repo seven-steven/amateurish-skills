@@ -67,6 +67,7 @@ class DiagramPaletteTests(test_artifacts.CLIEnvironment):
 
     def test_old_cli_baseline_and_empty_palette_preserve_asset_names_and_bytes(self):
         baseline = json.loads((FIXTURES / "diagram-palette-baseline.json").read_text())
+        self.env["TZ"] = baseline["timezone"]
         self.theme({})
         for theme in ("default", "palette"):
             with self.subTest(theme=theme):
@@ -306,13 +307,14 @@ class DiagramPaletteTests(test_artifacts.CLIEnvironment):
         self.assertEqual(self.requests, [])
 
     def test_literal_empty_map_and_body_color_do_not_change_old_diagrams(self):
+        baseline = json.loads((FIXTURES / "diagram-palette-baseline.json").read_text())
+        self.env["TZ"] = baseline["timezone"]
         self.theme(extra='pele: {}\nbase:\n  --md-primary-color: "#FF0055"\n')
         self.note.write_bytes((FIXTURES / "diagram-palette-baseline.md").read_bytes())
-        os.utime(self.note, (1767225600,) * 2)
+        os.utime(self.note, (baseline["referenceTimeMs"] / 1000,) * 2)
         self.cli("build", self.note, "--theme", "palette")
-        expected = json.loads((FIXTURES / "diagram-palette-baseline.json").read_text())["assets"]
         self.assertEqual({p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-                          for p in self.run_dir.glob("diagrams/*")}, expected)
+                          for p in self.run_dir.glob("diagrams/*")}, baseline["assets"])
 
     def test_selected_theme_accent_reaches_svg_png_and_inherited_article_styles(self):
         self.theme({"accent": "#d32f87"})
