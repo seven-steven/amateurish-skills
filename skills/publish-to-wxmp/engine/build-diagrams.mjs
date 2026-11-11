@@ -56,6 +56,24 @@ try {
     }
   }
   fs.writeFileSync(path.join(licenses, "npm-NOTICES.txt"), notices.join("\n"));
+  // Pele 1.13 repeats sparse Venn colors. Only our nonempty theme palette
+  // requests positional overrides; the unconfigured renderer stays unchanged.
+  // This private render option cannot be supplied by Mermaid graph config.
+  const peleFile = path.join(temporary, "node_modules/pele/dist/pele.js");
+  let pele = fs.readFileSync(peleFile, "utf8");
+  const patches = [
+    ['function Zw(e,t){', 'function Zw(e,t,preserveSlots){'],
+    ['let n=Kw[e];if(n===void 0)return;let r=[];',
+      'let n=Kw[e];if(n===void 0)return;if(e==="venn"&&preserveSlots)n={...n,repeat:false};let r=[];'],
+    ['function Nm(e,t){let n=Zw(e,Cm(t.themeVariables));',
+      'function Nm(e,t,preserveSlots){let n=Zw(e,Cm(t.themeVariables),preserveSlots);'],
+    ['Im(Nm(n,a),', 'Im(Nm(n,a,t.__wxmpPreserveSeriesSlots===true),'],
+  ];
+  for (const [expected, replacement] of patches) {
+    if (pele.split(expected).length !== 2) throw new Error(`Pele Venn compatibility patch drift: ${expected}`);
+    pele = pele.replace(expected, replacement);
+  }
+  fs.writeFileSync(peleFile, pele);
   fs.copyFileSync(path.join(here, "diagrams.mjs"), path.join(temporary, "entry.mjs"));
   execFileSync(path.join(temporary, "node_modules/.bin/esbuild"), ["entry.mjs", "--bundle", "--platform=node", "--format=esm", "--outfile=diagrams.bundle.mjs"], { cwd: temporary, stdio: "inherit" });
   fs.copyFileSync(path.join(temporary, "diagrams.bundle.mjs"), path.join(here, "diagrams.bundle.mjs"));

@@ -1,6 +1,6 @@
 # publish-to-wxmp：主题配置支持 Pele 图表配色
 
-Status: ready-for-agent
+Status: resolved
 
 ## Problem Statement
 
@@ -175,3 +175,22 @@ Status: ready-for-agent
 - 实现时查阅 [现有设计规格](../../docs/spec.md)、[CLI 契约](../../skills/publish-to-wxmp/WXPUSH.md) 和 [图表约束](../../skills/publish-to-wxmp/DIAGRAMS.md)，并在交付中同步对应契约。
 - 主测试先例是 [图表与发布链路回归](../../skills/publish-to-wxmp/engine/tests/test_diagrams.py) 中的 `DiagramTests`，复用 [构建归属与本地 HTTP 夹具](../../skills/publish-to-wxmp/engine/tests/test_artifacts.py) 中的 `CLIEnvironment`。主题准备与上传行为另见 [主题 CLI 回归](../../skills/publish-to-wxmp/engine/tests/test_rendering.py)、[上传回归](../../skills/publish-to-wxmp/engine/tests/test_upload.py) 及 [测试说明](../../skills/publish-to-wxmp/engine/tests/README.md)。
 - 既有决策背景见 [主题继承与深合并决策](../wxmp-publisher-migration/issues/02-engine-theme-preview.md) 和 [离线中文图表验收](../wxmp-pele/issues/02-offline-chinese-diagram.md)。本文是可选图表配色能力的增量规格，不替换既有发布流程与离线渲染约束。
+
+## Comments
+
+- Review-fix integration: merged exact fix `ff808bfa61045843cf84d4fe06f392e9338c1a6b` with `--no-ff` into clean `feat/wxmp-pele-theme`; merge `faa630a04355d59fdabdf059dcaf374e92e41378` has no conflicts or integration source edits. Evidence reports: `review-{spec,standards,fixes,fixes-merge}.md` under this run's `subagent-artifacts/outputs/8470bb6b-b11e-4339-a45f-55de66655d51/reports/` directory.
+- Spec axis: both P1 findings are addressed in the merged fix: sparse Venn overrides preserve unrelated theme/default slots, and implicit empty/unquoted top-level `pele` values are rejected while explicit `{}` and legacy body sections remain compatible. Real installed-CLI regressions, decoded PNG checks and both independent byte baselines pass. This is integration evidence, not an independent reviewer re-verdict.
+- Standards axis: the P2 duplicated installation inventory is consolidated into `CLIEnvironment.install_skill()`; both consumers pass. No new hard-breach finding was identified during merger scope inspection; independent re-review remains required.
+- Post-merge `timeout 900s npm test` passed (exit 0): typecheck; layout 7/7; Node engine 3/3; Python engine 53/53 (383.510s); server 9/9; installed Google Chrome browser 20/20 (16.9s). Full stdout/stderr: `/tmp/wxmp-review-fixes-merge-full-test.log`; setup, inspected diff and merge evidence: `/tmp/wxmp-review-fixes-merge-{setup,inspect,operation}.log`. Release hashes match the fix report; no rebuild was needed during conflict-free integration.
+- Spec status intentionally remains `ready-for-agent`: independent re-review and the final acceptance gate own resolution. Remote macOS/Node 22 CI and real WeChat/mobile visual confirmation were not run; the pinned-source Pele patch must be reviewed on future dependency upgrades.
+
+## Answer
+
+- Accepted on integration branch `feat/wxmp-pele-theme` after independent inspection of the initial-base-to-integration diff, all ticket Answers, release artifacts, compatibility captures and both review axes. Tickets [01](issues/01-diagram-palette.md), [02](issues/02-theme-freshness.md) and [03](issues/03-contract-and-example.md) are resolved with complete acceptance checklists and Answers; their contracts remain the pointers above.
+- Implementation → merge references: 01 `94bff34c08f0` → `e33d8a7da0ca`; 02 `f48885d756d5` → `a72334a1f231`; 03 `9a28dce32335` → `44715d5810e6`. Review fix `ff808bfa61045843cf84d4fe06f392e9338c1a6b` is integrated by `faa630a04355d59fdabdf059dcaf374e92e41378`.
+- Independent final review dispositions: spec P1 sparse Venn slots and P1 implicit-empty/unquoted `pele` rejection are addressed by the inspected build/compiler/parser hunks and real installed-CLI SVG/decoded-PNG/rejection regressions; standards P2 installation inventory duplication is addressed by the shared `CLIEnvironment.install_skill()` and both passing consumers. No actionable finding remains. Original review reports and historical Comments are retained, not rewritten as passing verdicts.
+- Final `timeout 900s npm test` on integration `a43e6d908d8e8d6a4a806cfa1896b2ad06059359`: exit 0; typecheck, layout 7/7, Node engine 3/3, Python engine 53/53 (389.296s), server 9/9, installed Chrome browser 20/20 (16.8s). Full stdout/stderr: `/tmp/wxmp-final-acceptance-full-test.log`. This includes both independent old-output oracles, offline installed example, all palette and freshness regressions. Only this tracker closure follows the tested code state.
+- Release bundles are committed and match verified build evidence: `engine.mjs` SHA-256 `697e6658df90910e142b54369d1dc73f1bd199c7b31f04b2d49582e23ca6bec6`; `diagrams.bundle.mjs` SHA-256 `6afd7375c0c1a5d76931df2034a9f0437855f05658e4b4d0223091de74bf90c0`. Baseline capture logs exactly match committed fixtures; pinned dependencies/font/WASM and existing themes are unchanged. Inspection and evidence: `/tmp/wxmp-final-acceptance-{inspection,evidence}.log`.
+- Final gate found one historical extra EOF blank line in `test_theme_freshness.py`; supervisor explicitly authorized its sole deletion, committed separately as `a43e6d9`. No semantic change; full base diff and working diff whitespace checks now pass. Evidence: `/tmp/wxmp-final-acceptance-{setup,whitespace}.log`.
+- Cleanup verification: parent completed four supported discards using the exact runtime handoffs; all four cleanup records now report complete with managed worktrees/branches removed. Parent evidence: `/tmp/wxmp-pele-theme-parent-cleanup-final.log`; independent verification: `/tmp/wxmp-final-acceptance-postcleanup.log`. Integration checkout/index remain clean; only integration and the five untouched pre-existing `/tmp/wxmp-pele-theme-*` worktrees remain. No retained or unknown worktree was manually removed.
+- Remaining manual verification: remote macOS/Node 22 CI and real WeChat/mobile visual confirmation were not run locally. Future Pele upgrades must review the fail-closed pinned-source compatibility patch. Full final acceptance report: `final-acceptance.md` in this run's report directory referenced in Comments.

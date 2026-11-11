@@ -1,6 +1,6 @@
 # 01：通过现有主题配置交付 Pele 图表配色
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: none
 
@@ -19,16 +19,29 @@ Blocked by: none
 
 ## Acceptance
 
-- [ ] 先通过旧实现的真实 CLI 固定受控输入的资产名称、SVG、PNG 兼容基线，再进入配色实现。
-- [ ] 按 TDD 逐个纵向切片实现规格中全部配色字段、部分覆盖、严格校验和诊断；空映射等价于无配置。
-- [ ] 图内 `style`、`classDef`、frontmatter 与初始化指令中的显式颜色优先，未指定的系列槽位仍继承主题或默认色。
-- [ ] 深色画布正确，只有背景改变时资产与缓存身份也正确；空深色画布不能冒充有效图表。
-- [ ] 没有 `pele` 配置时资产名称、SVG、PNG 与旧基线一致；相同新配置的重建结果确定。
-- [ ] 真实解码 PNG 并检查 SVG 具体样式；发行 bundle 与源码同步，独立安装副本可离线成图。
-- [ ] 新测试从 `npm test` 可达，完整 `npm test` 通过；所有 shell 命令带显式超时，stdout/stderr 记录在 `/tmp`。
+- [x] 先通过旧实现的真实 CLI 固定受控输入的资产名称、SVG、PNG 兼容基线，再进入配色实现。
+- [x] 按 TDD 逐个纵向切片实现规格中全部配色字段、部分覆盖、严格校验和诊断；空映射等价于无配置。
+- [x] 图内 `style`、`classDef`、frontmatter 与初始化指令中的显式颜色优先，未指定的系列槽位仍继承主题或默认色。
+- [x] 深色画布正确，只有背景改变时资产与缓存身份也正确；空深色画布不能冒充有效图表。
+- [x] 没有 `pele` 配置时资产名称、SVG、PNG 与旧基线一致；相同新配置的重建结果确定。
+- [x] 真实解码 PNG 并检查 SVG 具体样式；发行 bundle 与源码同步，独立安装副本可离线成图。
+- [x] 新测试从 `npm test` 可达，完整 `npm test` 通过；所有 shell 命令带显式超时，stdout/stderr 记录在 `/tmp`。
 
 ## Handoff
 
 开始前确认 worktree 包含集成分支当前 tip；先将状态改为 `claimed`。提交实现与测试后，合入集成分支最新 tip，再验证。报告提交 SHA、red/green 与完整测试日志、兼容基线来源、发行 bundle 重建证据；如受阻，报告准确原因并停止。由合并子代理在成功集成后将本票置为 `resolved` 并追加结果。
 
 ## Comments
+
+- Implementation started from integration SHA `5052bf4baab3734b7c819c96464948929459de51`; primary test seam is the real `wxpush` CLI (see spec Testing Decisions).
+- Implementation evidence: `engine/tests/test_diagram_palette.py` (under `skills/publish-to-wxmp/`) and its `fixtures/diagram-palette-baseline.{md,json}`. The baseline was captured with the unchanged initial-base CLI, default theme and reference time `1767225600000`, before renderer/CLI edits; capture log: `/tmp/wxmp-01-baseline.log`.
+- TDD logs: `/tmp/wxmp-01-{slice1,validation,mapping,background,reserved-key}-red.log`; corresponding green full-suite logs use `-green-full.log`. Full precedence matrix: `/tmp/wxmp-01-precedence-full.log`. Release rebuild: `/tmp/wxmp-01-background-build.log`. Status intentionally remains `claimed` for merger review/resolution.
+- Integration: merged implementation `94bff34c08f06e97de53b9bf3ddc66886709a7f1` into `feat/wxmp-pele-theme` with `git merge --no-ff`, preserving the ticket commit. Merge commit: `e33d8a7da0cac46b948d53450dc894f24b03273b`. No conflicts or source changes; no release rebuild was necessary. Post-merge full suite passed; ticket resolved by the merger. Independent reviewer gate remains a separate feature acceptance step.
+
+## Answer
+
+- Delivered the ticket Scope through the existing theme → `wxpush build` → offline diagram pipeline; see [spec](../spec.md) for the field, precedence and compatibility contract. Theme freshness and documentation/example work remain in tickets 02/03.
+- Implementation commit: `94bff34c08f06e97de53b9bf3ddc66886709a7f1`; integration merge: `e33d8a7da0cac46b948d53450dc894f24b03273b`. Scope/whitespace inspection: `/tmp/wxmp-01-merge-diff-review.log`; clean initial checkout: `/tmp/wxmp-01-merge-preflight.log`; merge parents and unchanged release hash: `/tmp/wxmp-01-merge-operation.log`.
+- Post-merge validation: `timeout 600s npm test`, complete stdout/stderr in `/tmp/wxmp-01-merge-full-test.log`. Passed typecheck, layout 7/7, Node engine 3/3, Python engine 39/39 (including all 12 palette tests), server 9/9, installed Google Chrome browser tests 20/20.
+- All acceptance boxes above are supported by the implementation evidence and passing integration suite. The committed independent old-CLI baseline remains the compatibility oracle. The merged bundle SHA-256 is `bcfe217c4ca28eaaf6340bfda8aa160b69b44a3814024432ea493b7702e82d13`, matching the implementer's repeat release rebuild.
+- Integration report: `01-merge.md`, alongside `01-implementation.md` under the run's `subagent-artifacts/outputs/8470bb6b-b11e-4339-a45f-55de66655d51/reports/` directory. Remote macOS/Node 22 CI and real WeChat/mobile visual confirmation were not executed by this merger.

@@ -1,6 +1,7 @@
 """Build/upload/push contract through the real CLI and a local HTTP adapter."""
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -44,6 +45,14 @@ class CLIEnvironment(unittest.TestCase):
         self.env = {**os.environ, "WXMP_API_BASE": f"http://127.0.0.1:{self.api.server_port}",
                     "WXMP_STATE_DIR": str(self.directory / "state"),
                     "HOME": str(self.directory)}
+
+    def install_skill(self):
+        self.installed = self.directory / "installed"
+        for name in ("scripts", "themes", "engine/diagram-assets"):
+            shutil.copytree(ROOT / name, self.installed / name)
+        for name in ("engine.mjs", "diagrams.bundle.mjs"):
+            shutil.copy2(ROOT / "engine" / name, self.installed / "engine" / name)
+        self.cli_path = self.installed / "scripts/wxpush.mts"
 
     def close_api(self):
         self.api.shutdown()

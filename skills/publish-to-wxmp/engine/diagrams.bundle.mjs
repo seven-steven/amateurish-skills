@@ -26552,20 +26552,21 @@ function Qw(e) {
   }
   return t.push(e.slice(r)), t.map((i) => i.trim());
 }
-function Zw(e, t) {
+function Zw(e, t, preserveSlots) {
   if (e === "xychart") {
     let i = Cm(t.xyChart).plotColorPalette;
     return typeof i == "string" ? { list: Qw(i), repeat: true } : void 0;
   }
   let n = Kw[e];
   if (n === void 0) return;
+  if (e === "venn" && preserveSlots) n = { ...n, repeat: false };
   let r = [];
   for (let i = 0; i < Mo; i++) r.push(t[n.prefix + (n.first + i)]);
   return n.repeat && (r = r.filter((i) => i != null && i !== "")), { list: r, repeat: n.repeat === true };
 }
 var mu = { style: "", inks: [] };
-function Nm(e, t) {
-  let n = Zw(e, Cm(t.themeVariables));
+function Nm(e, t, preserveSlots) {
+  let n = Zw(e, Cm(t.themeVariables), preserveSlots);
   if (n === void 0 || n.list.length === 0) return mu;
   let { list: r, repeat: i } = n, s = "", a = [];
   for (let o = 0; o < Mo && !(!i && o >= r.length); o++) {
@@ -26654,7 +26655,7 @@ function A_(e, t = {}) {
 }
 function S_(e, t = {}) {
   return Om(() => {
-    let { type: n, mermaidType: r, diagram: i, model: s, config: a } = E_(e, t), o = a[i.section ?? n], c = typeof o == "object" && o !== null && !Array.isArray(o) && o.useMaxWidth === false, l = t.responsive ?? !c, u = t.icons, h = u && ((p) => u(gt(p))), d = Dm({ type: n, mermaidType: r }, () => Im(Nm(n, a), () => rm(i.math ? t.math : void 0, () => tm(h, () => i.render(s, a, { ...t, responsive: l, icons: h }))))), m = t.outputLimit ?? g_;
+    let { type: n, mermaidType: r, diagram: i, model: s, config: a } = E_(e, t), o = a[i.section ?? n], c = typeof o == "object" && o !== null && !Array.isArray(o) && o.useMaxWidth === false, l = t.responsive ?? !c, u = t.icons, h = u && ((p) => u(gt(p))), d = Dm({ type: n, mermaidType: r }, () => Im(Nm(n, a, t.__wxmpPreserveSeriesSlots === true), () => rm(i.math ? t.math : void 0, () => tm(h, () => i.render(s, a, { ...t, responsive: l, icons: h }))))), m = t.outputLimit ?? g_;
     if (d.svg.length > m) throw new qe(`Diagram output is longer than the limit of ${m} characters.`, "limit", { type: n, mermaidType: r });
     for (let p of d.links) p.id = gt(p.id);
     return { type: n, mermaidType: r, ...d };
@@ -55859,7 +55860,7 @@ async function loadResources() {
   })();
   return resources;
 }
-function concreteSvg(svg, font) {
+function concreteSvg(svg, font, palette = {}) {
   const tree = parseFragment(svg);
   function visit(node2, inherited, presentation = {}) {
     if (!node2.attrs) return;
@@ -55907,7 +55908,9 @@ function concreteSvg(svg, font) {
     }
     for (const child of node2.childNodes || []) visit(child, vars, paint);
   }
-  for (const node2 of tree.childNodes) visit(node2, /* @__PURE__ */ new Map());
+  const aliases = { background: "bg", foreground: "fg", foreground_on_light: "fg-on-light", foreground_on_dark: "fg-on-dark" };
+  const variables = new Map(Object.entries(palette).map(([key, value]) => [`--pele-${aliases[key] || key.replaceAll("_", "-")}`, value]));
+  for (const node2 of tree.childNodes) visit(node2, variables);
   return serialize(tree);
 }
 function walkHtml(node2, visit) {
@@ -55974,7 +55977,7 @@ function rewriteImageReferences(markdown, src, url) {
   for (const { start, end, text: text3 } of changes.reverse()) markdown = markdown.slice(0, start) + text3 + markdown.slice(end);
   return markdown;
 }
-async function compileDiagrams(markdown, directory, now = Date.now()) {
+async function compileDiagrams(markdown, directory, now = Date.now(), palette = {}) {
   const diagrams = [];
   function collect(node2) {
     if (node2.type === "code" && node2.lang === "mermaid") diagrams.push(node2);
@@ -56013,6 +56016,7 @@ async function compileDiagrams(markdown, directory, now = Date.now()) {
         fontSize: 16,
         maxWidth: 315,
         now,
+        __wxmpPreserveSeriesSlots: Object.keys(palette).length > 0,
         icons() {
           throw new Error("custom icons are unsupported; rewrite as text/shapes");
         },
@@ -56024,9 +56028,12 @@ async function compileDiagrams(markdown, directory, now = Date.now()) {
         } }
       });
       if (![result.width, result.height].every((n) => Number.isFinite(n) && n > 0 && n <= 4096) || result.width * result.height * 4 > 8e6) throw new Error("diagram dimensions exceed the raster limit; split the diagram");
-      const svg = concreteSvg(result.svg, font);
+      const svg = concreteSvg(result.svg, font, palette);
+      const background = palette.background || "#ffffff";
+      const hex = background.length === 4 ? background.slice(1).replace(/./g, "$&$&") : background.slice(1);
+      const canvas = [0, 2, 4].map((offset) => parseInt(hex.slice(offset, offset + 2), 16));
       const renderer = new Resvg2(svg, {
-        background: "#ffffff",
+        background,
         fitTo: { mode: "zoom", value: 2 },
         font: { fontBuffers: [bytes], defaultFontFamily: FAMILY, sansSerifFamily: FAMILY, monospaceFamily: FAMILY, serifFamily: FAMILY, loadSystemFonts: false }
       });
@@ -56044,7 +56051,8 @@ async function compileDiagrams(markdown, directory, now = Date.now()) {
         image = renderer.render();
         const pixels = image.pixels;
         let visible = 0;
-        for (let i = 0; i < pixels.length; i += 4) if (Math.min(pixels[i], pixels[i + 1], pixels[i + 2]) < 200) visible++;
+        for (let i = 0; i < pixels.length; i += 4)
+          if (canvas.some((channel, index3) => Math.abs(pixels[i + index3] - channel) > 55)) visible++;
         if (visible < 10) throw new Error("blank diagram image");
         png = image.asPng();
         if (png.length >= 10 * 1024 * 1024) throw new Error("diagram PNG exceeds Wechat's 10MB image limit");
@@ -56052,7 +56060,9 @@ async function compileDiagrams(markdown, directory, now = Date.now()) {
         image?.free();
         renderer.free();
       }
-      const key = crypto.createHash("sha256").update(svg).digest("hex").slice(0, 20);
+      const identity = crypto.createHash("sha256").update(svg);
+      if (palette.background) identity.update(`\0background:${hex.toLowerCase()}`);
+      const key = identity.digest("hex").slice(0, 20);
       const name = `diagrams/${key}`;
       fs2.writeFileSync(path.join(directory, `${name}.mmd`), node2.value);
       fs2.writeFileSync(path.join(directory, `${name}.svg`), svg);

@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "b7ddc853663f79ebf76df0748e5b66d41236cdad",
+  "referenceTimeMs": 1767225600000,
+  "chart": "%%{init: {\"themeVariables\": {\"venn2\": \"#d32f87\"}}}%%\nvenn-beta\n set A: 10\n set B: 10\n set C: 10\n union A,B: 2\n union B,C: 2",
+  "assets": {
+    "37dad27c8bb125f887e9.mmd": "3176d02d123eafc77ff4fae975c298fc6c6a100411588ed91a4c61f2eb6fc70f",
+    "37dad27c8bb125f887e9.png": "e28636514ef40f9c585a0555901ab78286f9c15dd6e8b32e54a9e7026066d588",
+    "37dad27c8bb125f887e9.svg": "37dad27c8bb125f887e9bb49c9eb4cdc48c123f31dede18bb7b425dd50a8a1b4"
+  }
+}

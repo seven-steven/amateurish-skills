@@ -9,7 +9,19 @@ export type BuildRecord = {
   sourceHash: string;
   state: "building" | "built" | "uploaded";
   images: ImageSource[];
+  theme?: { name: string; fingerprint: string };
 };
+
+export function themeFingerprint(config: unknown): string {
+  const canonical = (value: any): any => {
+    if (Array.isArray(value)) return value.map(canonical);
+    if (value && typeof value === "object")
+      return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]));
+    return value;
+  };
+  return hash(JSON.stringify(canonical(config)));
+}
+
 const hash = (text: string) => crypto.createHash("sha256").update(text).digest("hex");
 
 export function beginBuild(outputRoot: string, notePath: string, raw: string, out?: string) {
@@ -34,7 +46,7 @@ export function saveRecord(dir: string, record: BuildRecord) {
   fs.renameSync(target + ".tmp", target);
 }
 
-export function loadBuild(outputRoot: string, notePath: string, raw: string, out?: string) {
+export function loadBuild(outputRoot: string, notePath: string, raw: string, resolveTheme: (name: string) => string, out?: string) {
   let dir: string;
   let record: BuildRecord;
   try {
@@ -47,5 +59,11 @@ export function loadBuild(outputRoot: string, notePath: string, raw: string, out
   if (record.notePath !== fs.realpathSync(notePath)) throw new Error("build belongs to another note: run build for this note first");
   if (record.sourceHash !== hash(raw)) throw new Error("build is stale: note changed — run build (and upload) first");
   if (record.state !== "built" && record.state !== "uploaded") throw new Error("build did not complete: fix the error and run build first");
+  if (!record.theme || typeof record.theme.name !== "string" || !record.theme.name || typeof record.theme.fingerprint !== "string")
+    throw new Error("build has no verifiable theme: run build (and upload) first");
+  let current: string;
+  try { current = resolveTheme(record.theme.name); }
+  catch (error) { throw new Error(`build theme cannot be loaded: ${(error as Error).message} — run build (and upload) first`); }
+  if (current !== record.theme.fingerprint) throw new Error("build is stale: theme changed — run build (and upload) first");
   return { dir, record };
 }

@@ -1,0 +1,31 @@
+# Independent example: teal article accents with an explicitly dark diagram canvas.
+# Select with build <note.md> --theme example-midnight; see WXPUSH.md#themes.
+base_theme: grace
+base:
+  "--md-primary-color": "#176b64"
+block:
+  h1:
+    border-bottom: "2px solid #176b64"
+  h2:
+    background: "#176b64"
+inline: {}
+pele:
+  background: "#101820"
+  foreground: "#eff4fa"
+  muted: "#a8bcc7"
+  line: "#69d3c5"
+  border: "#87b8b2"
+  surface: "#243b45"
+  surface_alt: "#304b55"
+  accent: "#38b2a0"
+  critical: "#ff7b72"
+  foreground_on_light: "#102a30"
+  foreground_on_dark: "#f1f8fa"
+  series_1: "#69d3c5"
+  series_2: "#85b8ff"
+  series_3: "#ffd580"
+  series_4: "#f29db4"
+  series_5: "#b6a1e8"
+  series_6: "#9ed58b"
+  series_7: "#f5aa78"
+  series_8: "#a7c9df"

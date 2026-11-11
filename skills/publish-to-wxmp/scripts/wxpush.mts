@@ -11,7 +11,7 @@ import os from "node:os";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import * as yaml from "./yaml.mts";
-import { beginBuild, loadBuild, saveRecord } from "./artifacts.mts";
+import { beginBuild, loadBuild, saveRecord, themeFingerprint } from "./artifacts.mts";
 
 const HERE = import.meta.dirname;
   // make CJS deps (reading-time) able to require() node builtins under ESM
@@ -57,6 +57,7 @@ type Theme = {
   block?: Record<string, Record<string, string>>;
   inline?: Record<string, Record<string, string>>;
   renderOptions?: { isMacCodeBlock?: boolean; isShowLineNumber?: boolean };
+  pele?: Record<string, string>;
 };
 type Config = { api_base?: string; author?: string; theme?: string; cover_dir?: string };
 
@@ -130,16 +131,45 @@ function listThemes(): { name: string; source: string }[] {
   return out;
 }
 
+const PELE_COLORS = new Set([
+  "background", "foreground", "muted", "line", "border", "surface", "surface_alt",
+  "accent", "critical", "foreground_on_light", "foreground_on_dark",
+  ...Array.from({ length: 8 }, (_, index) => `series_${index + 1}`),
+]);
+
+function validatePele(value: unknown, file: string): asserts value is Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${file}: pele must be a color mapping`);
+  for (const [key, color] of Object.entries(value)) {
+    if (!PELE_COLORS.has(key)) throw new Error(`${file}: pele.${key}: unknown color field`);
+    if (typeof color !== "string" || !/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color))
+      throw new Error(`${file}: pele.${key}: expected a quoted opaque #RGB or #RRGGBB color`);
+  }
+}
+
 function loadTheme(name: string): Theme {
   const builtins = builtinThemes();
   if (builtins[name]) return builtins[name] as Theme;
   const file = ["yaml", "yml"].map(e => path.join(THEMES_DIR, `${name}.${e}`)).find(fs.existsSync);
-  if (!file) die(`theme not found: ${name} (see --list-themes)`);
-  const spec = yaml.parse(fs.readFileSync(file, "utf8")) as { base_theme?: string } & Theme;
+  if (!file) throw new Error(`theme not found: ${name} (see --list-themes)`);
+  let spec: { base_theme?: string } & Theme;
+  try { spec = yaml.parse(fs.readFileSync(file, "utf8"), { implicitEmptyMapsAsNull: ["pele"] }) as typeof spec; }
+  catch (error) { throw new Error(`${file}: ${(error as Error).message}`); }
+  if (Object.hasOwn(spec, "pele")) validatePele(spec.pele, file);
   const base = spec.base_theme ? builtins[spec.base_theme] : undefined;
-  if (spec.base_theme && !base) die(`unknown base_theme: ${spec.base_theme}`);
+  if (spec.base_theme && !base) throw new Error(`unknown base_theme: ${spec.base_theme}`);
   const merged = base ? deepMerge(base, spec) : spec;
   return JSON.parse(JSON.stringify(merged));
+}
+
+function effectiveThemeFingerprint(theme: Theme): string {
+  return themeFingerprint({
+    base: theme.base ?? {}, block: theme.block ?? {}, inline: theme.inline ?? {},
+    renderOptions: {
+      isMacCodeBlock: theme.renderOptions?.isMacCodeBlock ?? true,
+      isShowLineNumber: theme.renderOptions?.isShowLineNumber ?? false,
+    },
+    pele: theme.pele ?? {},
+  });
 }
 
 // ---------- run dir ----------
@@ -316,6 +346,7 @@ async function main() {
     const { dir, record } = beginBuild(RUNTIME_OUT, notePath, raw, flag("out"));
     const theme = flag("theme") || cfg.theme || "default";
     const selectedTheme = loadTheme(theme);
+    record.theme = { name: theme, fingerprint: effectiveThemeFingerprint(selectedTheme) };
     const renderer = initRenderer({
       theme: selectedTheme,
       fonts: `-apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif`,
@@ -330,7 +361,7 @@ async function main() {
     });
     const { compileDiagrams, imageSources } = await import("../engine/diagrams.bundle.mjs");
     const diagramNow = fs.statSync(notePath).mtimeMs;
-    const compiled = await compileDiagrams(body, dir, diagramNow);
+    const compiled = await compileDiagrams(body, dir, diagramNow, selectedTheme.pele);
     const { html, readingTime } = renderMarkdown(compiled.markdown, renderer);
     // Preserve the container/references and save the same concrete inline CSS
     // for preview and push. WeChat strips stylesheets and mishandles custom
@@ -347,7 +378,8 @@ async function main() {
     return;
   }
 
-  const { dir: run, record } = loadBuild(RUNTIME_OUT, notePath, raw, flag("out"));
+  const { dir: run, record } = loadBuild(RUNTIME_OUT, notePath, raw,
+    name => effectiveThemeFingerprint(loadTheme(name)), flag("out"));
 
   if (cmd === "upload") {
     if (record.state === "uploaded") { console.log("already uploaded"); return; }

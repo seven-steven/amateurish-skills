@@ -40,7 +40,9 @@ Done when: the adapted Markdown publishing copy exists in the task workspace, it
 
 ### 3. Build, upload, preview
 
-`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持迭代)。Cover per WXPUSH conventions; ask the user only when no cover candidate exists. For diagrams, verify that the uploaded images load and remain legible at phone width, with complete labels and unclipped connectors. Open the preview for the user; apply requested edits, rebuild, re-preview when structural.
+`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持产物刷新)。Cover per WXPUSH conventions; ask the user only when no cover candidate exists. For diagrams, verify that the uploaded images load and remain legible at phone width, with complete labels and unclipped connectors. When selecting or editing theme colors, read [WXPUSH Themes](WXPUSH.md#themes) for the optional `pele` contract and independent example; preserve explicit diagram colors and inspect contrast, including the PNG canvas.
+
+A change to the selected theme's article styles, render options or diagram colors requires an explicit rebuild, upload and preview before confirmation or push. Preview/upload/draft creation/update reject stale builds before starting a new preview or remote requests; follow [WXPUSH freshness rules](WXPUSH.md#构建新鲜度) rather than reusing old output. A running preview does not watch theme sources; restart it for a new run. Open the preview for the user; apply requested edits and repeat build/upload/preview for changed content or theme.
 
 Done when: the user confirms the rendered article.
 

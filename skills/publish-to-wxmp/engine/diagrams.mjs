@@ -32,7 +32,7 @@ async function loadResources() {
 
 // SVG presentation attributes also contain var(), so HTML-only style inlining
 // is insufficient. Resolve inherited variables before handing SVG to resvg.
-function concreteSvg(svg, font) {
+function concreteSvg(svg, font, palette = {}) {
   const tree = parseFragment(svg);
   function visit(node, inherited, presentation = {}) {
     if (!node.attrs) return;
@@ -76,7 +76,9 @@ function concreteSvg(svg, font) {
     }
     for (const child of node.childNodes || []) visit(child, vars, paint);
   }
-  for (const node of tree.childNodes) visit(node, new Map());
+  const aliases = { background: "bg", foreground: "fg", foreground_on_light: "fg-on-light", foreground_on_dark: "fg-on-dark" };
+  const variables = new Map(Object.entries(palette).map(([key, value]) => [`--pele-${aliases[key] || key.replaceAll("_", "-")}`, value]));
+  for (const node of tree.childNodes) visit(node, variables);
   return serialize(tree);
 }
 
@@ -146,7 +148,7 @@ export function rewriteImageReferences(markdown, src, url) {
   return markdown;
 }
 
-export async function compileDiagrams(markdown, directory, now = Date.now()) {
+export async function compileDiagrams(markdown, directory, now = Date.now(), palette = {}) {
   const diagrams = [];
   function collect(node) {
     if (node.type === "code" && node.lang === "mermaid") diagrams.push(node);
@@ -181,14 +183,18 @@ export async function compileDiagrams(markdown, directory, now = Date.now()) {
       const result = render(model, {
         idPrefix: "diagram", fontFamily: FAMILY, fontFamilyMono: FAMILY,
         fontSize: 16, maxWidth: 315, now,
+        __wxmpPreserveSeriesSlots: Object.keys(palette).length > 0,
         icons() { throw new Error("custom icons are unsupported; rewrite as text/shapes"); },
         math() { throw new Error("math typesetting is unsupported; rewrite as text/shapes"); },
         measurer: { width(text, size) { return font.getAdvanceWidth(text, size, { kerning: true }); } },
       });
       if (![result.width, result.height].every(n => Number.isFinite(n) && n > 0 && n <= 4096) || result.width * result.height * 4 > 8000000) throw new Error("diagram dimensions exceed the raster limit; split the diagram");
-      const svg = concreteSvg(result.svg, font);
+      const svg = concreteSvg(result.svg, font, palette);
+      const background = palette.background || "#ffffff";
+      const hex = background.length === 4 ? background.slice(1).replace(/./g, "$&$&") : background.slice(1);
+      const canvas = [0, 2, 4].map(offset => parseInt(hex.slice(offset, offset + 2), 16));
       const renderer = new Resvg(svg, {
-        background: "#ffffff", fitTo: { mode: "zoom", value: 2 },
+        background, fitTo: { mode: "zoom", value: 2 },
         font: { fontBuffers: [bytes], defaultFontFamily: FAMILY, sansSerifFamily: FAMILY, monospaceFamily: FAMILY, serifFamily: FAMILY, loadSystemFonts: false },
       });
       let image;
@@ -203,12 +209,17 @@ export async function compileDiagrams(markdown, directory, now = Date.now()) {
         image = renderer.render();
         const pixels = image.pixels;
         let visible = 0;
-        for (let i = 0; i < pixels.length; i += 4) if (Math.min(pixels[i], pixels[i + 1], pixels[i + 2]) < 200) visible++;
+        for (let i = 0; i < pixels.length; i += 4)
+          if (canvas.some((channel, index) => Math.abs(pixels[i + index] - channel) > 55)) visible++;
         if (visible < 10) throw new Error("blank diagram image");
         png = image.asPng();
         if (png.length >= 10 * 1024 * 1024) throw new Error("diagram PNG exceeds Wechat's 10MB image limit");
       } finally { image?.free(); renderer.free(); }
-      const key = crypto.createHash("sha256").update(svg).digest("hex").slice(0, 20);
+      const identity = crypto.createHash("sha256").update(svg);
+      // The canvas may change PNG bytes without appearing in the concrete SVG.
+      // Keep the historical SVG-only identity when no canvas was configured.
+      if (palette.background) identity.update(`\0background:${hex.toLowerCase()}`);
+      const key = identity.digest("hex").slice(0, 20);
       const name = `diagrams/${key}`;
       fs.writeFileSync(path.join(directory, `${name}.mmd`), node.value);
       fs.writeFileSync(path.join(directory, `${name}.svg`), svg);
