@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,13 +9,24 @@ import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 
 const cli = fileURLToPath(new URL('../scripts/render.mjs', import.meta.url));
-function environment(t) {
+function environment(t, { standalone = false } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cover-test-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const tmp = path.join(dir, 'tmp');
   fs.mkdirSync(tmp);
   const env = { ...process.env, HOME: dir, TMPDIR: tmp };
-  const run = (...args) => spawnSync(process.execPath, [cli, ...args], { env, cwd: dir, encoding: 'utf8', timeout: 20000 });
+  let command = cli;
+  if (standalone) {
+    const installed = path.join(dir, 'installed');
+    for (const subdir of ['scripts', 'assets', 'vendor']) {
+      fs.cpSync(new URL(`../${subdir}/`, import.meta.url), path.join(installed, subdir), { recursive: true });
+    }
+    command = path.join(installed, 'scripts/render.mjs');
+    const guard = path.join(dir, 'offline.cjs');
+    fs.writeFileSync(guard, "globalThis.fetch = () => { throw Error('unexpected network request'); };\n");
+    env.NODE_OPTIONS = `--require="${guard}"`;
+  }
+  const run = (...args) => spawnSync(process.execPath, [command, ...args], { env, cwd: dir, encoding: 'utf8', timeout: 20000 });
   const render = (...args) => {
     const proc = run(...args);
     assert.equal(proc.status, 0, proc.error?.message ?? proc.stderr);
@@ -143,6 +155,16 @@ test('headlines render as a local SVG and a 940 × 400 PNG with centered ink ove
 });
 
 const titles = ['--lead', 'FDE交付', '--line', 'FDE', '--line', '交付'];
+test('a standalone offline installation preserves the published PNGs from 66613b4', t => {
+  const { render } = environment(t, { standalone: true });
+  const files = [...render('--mode', 'both', ...titles).files, ...render('--mode', 'single', ...titles).files];
+  const hashes = Object.fromEntries(files.map(f => [f.layout, createHash('sha256').update(fs.readFileSync(f.png)).digest('hex')]));
+  assert.deepEqual(hashes, {
+    lead: 'c0b54e3ec54bf6c19384b9d2352a17513b512df1a56b9616909485f98faf464a',
+    secondary: '01dbaed6a0be6c1e037bd9e9693105d3a338ae24c5b552151a0aa75561134f79',
+    single: 'f9bacd58ef9c67494963655b6f8eb6466122cdede6b6a1b182bad0a9789f6a6f',
+  });
+});
 test('single keeps both lines and the accent intact when center-cropped from 940 to 400', t => {
   const { render } = environment(t);
   const { files } = render('--mode', '单图', ...titles.slice(2));

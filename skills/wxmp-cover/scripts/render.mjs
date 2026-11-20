@@ -3,7 +3,7 @@ import { settings } from './settings.mjs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import opentype from '../vendor/opentype.cjs';
-import { initWasm, Resvg } from '../vendor/resvg.mjs';
+import { svgToPng } from '../vendor/rasterize.mjs';
 import { coverSvg } from './layout.mjs';
 
 function loadFont({fontFile, fontWeight}) {
@@ -33,15 +33,12 @@ async function main() {
   const { mode, root, theme, style } = settings(values);
   const layouts = mode === 'both' ? ['lead', 'secondary'] : [mode];
   const font = loadFont(style);
-  await initWasm(fs.readFileSync(new URL('../vendor/resvg.wasm', import.meta.url)));
-  const images = layouts.map(layout => {
+  const images = [];
+  for (const layout of layouts) {
     const lines = layout === 'lead' ? [values.lead] : values.line;
     const svg = coverSvg(font, layout, lines, style);
-    const renderer = new Resvg(svg);
-    const image = renderer.render();
-    try { return { layout, lines, svg, png: image.asPng() }; }
-    finally { image.free(); renderer.free(); }
-  });
+    images.push({ layout, lines, svg, png: await svgToPng(svg) });
+  }
   fs.mkdirSync(root, {recursive: true});
   const dir = fs.mkdtempSync(path.join(root, 'run-'));
   const files = images.map(image => {

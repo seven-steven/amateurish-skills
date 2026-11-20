@@ -1,6 +1,6 @@
 # Distributed assets and corresponding source
 
-These are unmodified upstream files (some filenames shortened), shipped inside this skill so `npx skills add … --skill wxmp-cover` can install it independently. No runtime downloads or system font discovery.
+These are unmodified upstream files (some filenames shortened), shipped inside this skill so `npx skills add … --skill wxmp-cover` can install it independently. No runtime downloads or system font discovery. The project-owned `vendor/rasterize.mjs` beside these assets is copied from `tools/wxmp-graphics/rasterize.mjs`; that directory's lockfile selects the npm releases for both WeChat skills.
 
 | Distributed asset | Upstream file / release | SHA-256 |
 | --- | --- | --- |

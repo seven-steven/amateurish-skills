@@ -1,5 +1,5 @@
 {
-  "name": "wxmp-diagram-build",
+  "name": "wxmp-graphics-build",
   "private": true,
   "type": "module",
   "dependencies": {

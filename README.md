@@ -49,6 +49,9 @@ npx skills add seven-steven/amateurish-skills --skill wxmp-cover
 
 ## 开发
 
+两个微信 skill 共用 `tools/wxmp-graphics/rasterize.mjs` 和同目录的依赖锁。修改 SVG → PNG 实现、图表源码或依赖后，在仓库根目录重建，连同两个 skill 内的发行文件一起提交；不要手改发行副本。用户安装单个 skill 不需要构建。
+
 ```bash
-npm test   # engine 单测 + Playwright 浏览器测试(排版回归)
+npm run build:wxmp-graphics
+npm test
 ```

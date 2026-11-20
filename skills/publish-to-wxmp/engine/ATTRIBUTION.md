@@ -14,8 +14,8 @@
 
 ## Offline diagram distribution
 
-`diagrams.mjs` 是本地集成真源;`node skills/publish-to-wxmp/engine/build-diagrams.mjs` 用独立 lockfile 构建 `diagrams.bundle.mjs`,并校验随包 WASM 和完整 Noto 简体中文字体。仅构建时需要联网/npm;运行时不读取 node_modules、系统字体或在线渲染服务。JS、WASM、字体及许可共同构成可安装目录,不再声称图表引擎只有一个 JS 文件。
+`diagrams.mjs` 维护图表集成。仓库根目录的 `npm run build:wxmp-graphics` 使用 `tools/wxmp-graphics/` 中的共享构建锁生成 `diagrams.bundle.mjs` 与离线栅格化发行文件；原 `build-diagrams.mjs` 在仓库内仍可调用。仅构建时需要联网/npm;运行时不读取 node_modules、系统字体或在线渲染服务。JS、WASM、字体及许可共同构成可安装目录,不再声称图表引擎只有一个 JS 文件。
 
-图表 bundle 包含 Pele 1.13.0(MIT,附 Lucide ISC notice)、resvg-wasm 2.6.2(MPL-2.0)的 JS glue、opentype.js(MIT)、Markdown 解析器及 HTML/CSS 解析工具。Pele 负责布局和 SVG;opentype 使用同一份随包字体度量并检查字形;resvg 的本地 WASM 负责 PNG。原始 Mermaid、具体化样式的 SVG 和 PNG 均保存在用户 run dir。
+图表 bundle 包含 Pele 1.13.0(MIT,附 Lucide ISC notice)、opentype.js(MIT)、Markdown 解析器及 HTML/CSS 解析工具。resvg-wasm 2.6.2(MPL-2.0) 的原版 JS glue、WASM 与共享的 `rasterize.mjs` 随 `diagram-assets/` 分发。Pele 负责布局和 SVG;opentype 使用同一份随包字体度量并检查字形;resvg 的本地 WASM 负责 PNG。原始 Mermaid、具体化样式的 SVG 和 PNG 均保存在用户 run dir。
 
-分发资产清单记录字节数、SHA-256 和固定来源;字体与 WASM 合计 18,915,970 字节,另有约 2 MB 的预构建 JS。完整许可、归属及 MPL 对应源码获取说明见 [diagram-assets/licenses/SOURCES.md](diagram-assets/licenses/SOURCES.md)。升级时更新 lockfile、资产清单与许可,重建后执行 `npm test`。
+分发资产清单记录字节数、SHA-256 和固定来源;字体与 WASM 合计 18,915,970 字节,另有约 2 MB 的预构建 JS。完整许可、归属及 MPL 对应源码获取说明见 [diagram-assets/licenses/SOURCES.md](diagram-assets/licenses/SOURCES.md)。升级时更新共享依赖锁并复核许可；构建从锁定的 npm 包记录 WASM 校验值。重建后执行 `npm test`。

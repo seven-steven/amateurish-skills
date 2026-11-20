@@ -3,7 +3,6 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { parse, render } from "pele";
-import { initWasm, Resvg } from "@resvg/resvg-wasm";
 import opentype from "opentype.js";
 import { parseFragment, serialize } from "parse5";
 import postcss from "postcss";
@@ -19,14 +18,13 @@ export function checkDiagramAssets() {
     if (bytes.length !== entry.bytes || crypto.createHash("sha256").update(bytes).digest("hex") !== entry.sha256) throw new Error(`missing or corrupt diagram asset: ${name}; reinstall the skill`);
   }
 }
-async function loadResources() {
-  if (!resources) resources = (async () => {
+function loadResources() {
+  if (!resources) {
     checkDiagramAssets();
     const bytes = fs.readFileSync(new URL("NotoSansCJKsc-Regular.otf", ASSETS));
     const font = opentype.parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
-    await initWasm(fs.readFileSync(new URL("resvg.wasm", ASSETS)));
-    return { bytes, font };
-  })();
+    resources = { bytes, font };
+  }
   return resources;
 }
 
@@ -156,7 +154,8 @@ export async function compileDiagrams(markdown, directory, now = Date.now(), pal
   }
   collect(fromMarkdown(markdown));
   if (!diagrams.length) return { markdown, images: [] };
-  const { bytes, font } = await loadResources();
+  const { bytes, font } = loadResources();
+  const { svgToPng } = await import("./diagram-assets/rasterize.mjs");
   fs.mkdirSync(path.join(directory, "diagrams"), { recursive: true });
   const images = [];
   const replacements = [];
@@ -193,28 +192,24 @@ export async function compileDiagrams(markdown, directory, now = Date.now(), pal
       const background = palette.background || "#ffffff";
       const hex = background.length === 4 ? background.slice(1).replace(/./g, "$&$&") : background.slice(1);
       const canvas = [0, 2, 4].map(offset => parseInt(hex.slice(offset, offset + 2), 16));
-      const renderer = new Resvg(svg, {
-        background, fitTo: { mode: "zoom", value: 2 },
-        font: { fontBuffers: [bytes], defaultFontFamily: FAMILY, sansSerifFamily: FAMILY, monospaceFamily: FAMILY, serifFamily: FAMILY, loadSystemFonts: false },
-      });
-      let image;
-      let png;
-      try {
-        if (renderer.imagesToResolve().length) throw new Error("external image resources are unsupported");
-        const bounds = renderer.innerBBox();
-        try {
+      const png = await svgToPng(svg, {
+        renderOptions: {
+          background, fitTo: { mode: "zoom", value: 2 },
+          font: { fontBuffers: [bytes], defaultFontFamily: FAMILY, sansSerifFamily: FAMILY, monospaceFamily: FAMILY, serifFamily: FAMILY, loadSystemFonts: false },
+        },
+        checkBounds(bounds) {
           if (!bounds) throw new Error("empty diagram");
           if (bounds.x < -1 || bounds.y < -1 || bounds.x + bounds.width > result.width + 1 || bounds.y + bounds.height > result.height + 1) throw new Error("diagram content is clipped; adjust layout or split the diagram");
-        } finally { bounds?.free(); }
-        image = renderer.render();
-        const pixels = image.pixels;
-        let visible = 0;
-        for (let i = 0; i < pixels.length; i += 4)
-          if (canvas.some((channel, index) => Math.abs(pixels[i + index] - channel) > 55)) visible++;
-        if (visible < 10) throw new Error("blank diagram image");
-        png = image.asPng();
-        if (png.length >= 10 * 1024 * 1024) throw new Error("diagram PNG exceeds Wechat's 10MB image limit");
-      } finally { image?.free(); renderer.free(); }
+        },
+        checkPixels(pixels) {
+          let visible = 0;
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (canvas.some((channel, index) => Math.abs(pixels[i + index] - channel) > 55) && ++visible === 10) return;
+          }
+          throw new Error("blank diagram image");
+        },
+      });
+      if (png.length >= 10 * 1024 * 1024) throw new Error("diagram PNG exceeds Wechat's 10MB image limit");
       const identity = crypto.createHash("sha256").update(svg);
       // The canvas may change PNG bytes without appearing in the concrete SVG.
       // Keep the historical SVG-only identity when no canvas was configured.

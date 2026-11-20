@@ -56,7 +56,7 @@ HTML 解析测试和浏览器测试共享 `fixtures/geek-black.md`。浏览器�
 
 ```bash
 node skills/publish-to-wxmp/engine/build.mjs           # 正文引擎/主题/兼容层
-node skills/publish-to-wxmp/engine/build-diagrams.mjs  # 图表实现,锁依赖并校验 WASM/字体
+npm run build:wxmp-graphics                            # 图表 bundle 和两个 skill 的本地栅格化发行文件
 npm test
 ```
 

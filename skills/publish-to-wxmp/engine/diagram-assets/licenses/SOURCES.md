@@ -1,10 +1,10 @@
 # Diagram distribution: notices and corresponding source
 
-The shipped font and WASM are unmodified upstream files, verified against the adjacent asset manifest. Dependency versions and archive integrity are fixed by the diagram build lockfile. `npm-NOTICES.txt` preserves the npm dependencies' available license and copyright texts, including Pele's MIT and additional Lucide ISC notices. Build-only dependencies' notices are included as well.
+The shipped font and WASM are unmodified upstream files, verified against the adjacent asset manifest. Dependency versions and archive integrity are fixed by the shared graphics build lockfile (`tools/wxmp-graphics/package-lock.json` in the repository). `npm-NOTICES.txt` preserves the npm dependencies' available license and copyright texts, including Pele's MIT and additional Lucide ISC notices. Build-only dependencies' notices are included as well.
 
 ## resvg-wasm 2.6.2 — MPL-2.0
 
-The WASM binary and its JS glue originate from the unmodified [published npm archive](https://registry.npmjs.org/@resvg/resvg-wasm/-/resvg-wasm-2.6.2.tgz). JS glue is incorporated into the generated diagram bundle; bundling changes packaging, not the upstream glue source. The original glue source remains available in that archive. Local integration and build source are distributed alongside the bundle in this skill.
+The WASM binary and its JS glue originate from the unmodified [published npm archive](https://registry.npmjs.org/@resvg/resvg-wasm/-/resvg-wasm-2.6.2.tgz). `resvg.mjs` is the unmodified `index.mjs` glue from that archive. The local `rasterize.mjs` integration is shipped beside it. The shared build source lives in `tools/wxmp-graphics/` in the repository.
 
 Corresponding upstream Rust/binding source is available at [resvg-js v2.6.2, commit 9ca058462ac529120c8cc84ddcd6fef644cc5406](https://github.com/yisibl/resvg-js/tree/9ca058462ac529120c8cc84ddcd6fef644cc5406), downloadable as a [source archive](https://github.com/yisibl/resvg-js/archive/9ca058462ac529120c8cc84ddcd6fef644cc5406.tar.gz). Recipients may obtain, use and modify MPL-covered source under the full terms in `resvg-MPL-2.0.txt`.
 

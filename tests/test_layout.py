@@ -8,6 +8,7 @@ Run as part of `npm test` (test:layout). No third-party deps.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 import unittest
 from pathlib import Path
@@ -16,6 +17,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LayoutIntegrityTests(unittest.TestCase):
+    def test_installable_wxmp_skills_ship_the_same_raster_runtime(self):
+        diagram = ROOT / "skills/publish-to-wxmp/engine/diagram-assets"
+        cover = ROOT / "skills/wxmp-cover/vendor"
+        source = ROOT / "tools/wxmp-graphics/rasterize.mjs"
+        for name in ("rasterize.mjs", "resvg.mjs", "resvg.wasm"):
+            with self.subTest(name=name):
+                copies = [diagram / name, cover / name]
+                if name == source.name:
+                    copies.append(source)
+                for asset in copies:
+                    self.assertTrue(asset.is_file() and not asset.is_symlink(), f"missing standalone file: {asset}")
+                digests = {hashlib.sha256(asset.read_bytes()).hexdigest() for asset in copies}
+                self.assertEqual(len(digests), 1, "raster runtime differs; run npm run build:wxmp-graphics")
+
     def test_workflow_path_references_exist(self):
         """Every bare `dir/` token or `context:`/`discover -s` value in the workflow exists."""
         text = (ROOT / ".github" / "workflows" / "docker.yml").read_text(encoding="utf-8")

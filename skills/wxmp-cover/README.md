@@ -37,4 +37,4 @@ node scripts/render.mjs --mode both --lead 'FDE交付' --line 'FDE' --line '交�
 
 这里传的是**选定的短词**而非 Markdown 路径。只做 `lead` 时可以只传 `--lead`，只做 `secondary/single` 时只需两次 `--line`。成功时 stdout 是 JSON，含实际模式、选中主题、字体及 `files[].{layout,lines,svg,png}`；出错时 stderr 给出原因并返回非零状态。相同字体、主题、版式与短词可重建相同的 PNG（输出路径每次不同）。
 
-维护者：在仓库根目录运行 `npm run test:cover` 或 `npm test`。测试从 CLI 读取真实 PNG，检验安全区、强调条、主题等，不用线上的微信或生图服务。随包资产及授权见 [来源与许可](assets/licenses/SOURCES.md)。
+维护者：封面布局在 `scripts/layout.mjs`。修改仓库的共享 `tools/wxmp-graphics/rasterize.mjs` 或升级渲染依赖时，先在仓库根目录运行 `npm run build:wxmp-graphics` 更新两个 skill 的发行文件，再运行 `npm test`。仅验证封面可用 `npm run test:cover`。测试从 CLI 读取真实 PNG，检验安全区、强调条、主题等，不用线上的微信或生图服务。随包资产及授权见 [来源与许可](assets/licenses/SOURCES.md)。

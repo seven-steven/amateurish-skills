@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:wxmp-graphics": "node tools/wxmp-graphics/build.mjs",
     "test": "npm run typecheck && npm run test:layout && npm run test:cover && npm run test:engine && npm run test:server && npm run test:browser",
     "typecheck": "tsc --noEmit",
     "test:layout": "python3 -m unittest discover -s tests -v",
