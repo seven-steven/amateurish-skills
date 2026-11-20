@@ -9,6 +9,7 @@
 | publish-to-wxmp | [skills/publish-to-wxmp/](skills/publish-to-wxmp/) | 把 Markdown 笔记排版发布到微信公众号草稿箱(本地渲染引擎 + 自定义主题 + 真实预览),群发由人工在后台完成 |
 | wxmp-cover | [skills/wxmp-cover/](skills/wxmp-cover/) | 从文章提炼短词，离线生成公众号头条、次条或可居中裁方的封面，字体与配色可配置 |
 | publish-to-blog | [skills/publish-to-blog/](skills/publish-to-blog/) | 把笔记改编为 Hexo 博客文章:元数据自动决策、正文仅按需适配笔记引用,预览确认后发布并回链 |
+| scys-title | [skills/scys-title/](skills/scys-title/) | 为生财有术等社群的帖子、文章或专栏分组生成候选标题，并说明最推荐哪 1–2 个及其理由 |
 
 ## 安装
 
@@ -18,9 +19,10 @@
 npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp
 npx skills add seven-steven/amateurish-skills --skill publish-to-blog
 npx skills add seven-steven/amateurish-skills --skill wxmp-cover
+npx skills add seven-steven/amateurish-skills --skill scys-title
 ```
 
-不带 `--skill` 则交互式选择。安装后按各 skill README 配置:
+不带 `--skill` 则交互式选择。`scys-title` 无需配置，见[使用示例](skills/scys-title/README.md)。其余 skill 安装后按各自 README 配置:
 
 - [publish-to-wxmp 配置](skills/publish-to-wxmp/README.md#配置)(需配套服务端)
 - [wxmp-cover 配置](skills/wxmp-cover/README.md#配置)(无需发布服务)
