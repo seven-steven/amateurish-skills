@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run typecheck && npm run test:layout && npm run test:engine && npm run test:server && npm run test:browser",
+    "test": "npm run typecheck && npm run test:layout && npm run test:cover && npm run test:engine && npm run test:server && npm run test:browser",
     "typecheck": "tsc --noEmit",
     "test:layout": "python3 -m unittest discover -s tests -v",
+    "test:cover": "node --test skills/wxmp-cover/tests/*.test.mjs",
     "test:server": "./wxmp-server/run-tests.sh",
     "test:engine": "node --test skills/publish-to-wxmp/engine/tests/*.test.mjs && python3 -m unittest discover -s skills/publish-to-wxmp/engine/tests -v",
     "test:browser": "playwright test"
@@ -13,6 +14,7 @@
   "devDependencies": {
     "@playwright/test": "1.65.0",
     "@types/node": "22.19.0",
+    "pngjs": "7.0.0",
     "typescript": "5.9.3"
   }
 }

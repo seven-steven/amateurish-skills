@@ -7,6 +7,7 @@
 | Skill | 目录 | 简介 |
 | --- | --- | --- |
 | publish-to-wxmp | [skills/publish-to-wxmp/](skills/publish-to-wxmp/) | 把 Markdown 笔记排版发布到微信公众号草稿箱(本地渲染引擎 + 自定义主题 + 真实预览),群发由人工在后台完成 |
+| wxmp-cover | [skills/wxmp-cover/](skills/wxmp-cover/) | 从文章提炼短词，离线生成公众号头条、次条或可居中裁方的封面，字体与配色可配置 |
 | publish-to-blog | [skills/publish-to-blog/](skills/publish-to-blog/) | 把笔记改编为 Hexo 博客文章:元数据自动决策、正文仅按需适配笔记引用,预览确认后发布并回链 |
 
 ## 安装
@@ -16,11 +17,13 @@
 ```bash
 npx skills add seven-steven/amateurish-skills --skill publish-to-wxmp
 npx skills add seven-steven/amateurish-skills --skill publish-to-blog
+npx skills add seven-steven/amateurish-skills --skill wxmp-cover
 ```
 
 不带 `--skill` 则交互式选择。安装后按各 skill README 配置:
 
 - [publish-to-wxmp 配置](skills/publish-to-wxmp/README.md#配置)(需配套服务端)
+- [wxmp-cover 配置](skills/wxmp-cover/README.md#配置)(无需发布服务)
 - [publish-to-blog 配置](skills/publish-to-blog/README.md#配置)
 
 ## 配置约定

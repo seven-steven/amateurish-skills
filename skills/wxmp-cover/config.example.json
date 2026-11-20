@@ -1,0 +1,14 @@
+{
+  "mode": "both",
+  "theme": "jade-serif",
+  "outputDir": "~/Pictures/wxmp-covers",
+  "themes": {
+    "brand-blue": {
+      "preset": "slate-sans",
+      "light": "#35597C",
+      "base": "#102034",
+      "ink": "#FFF8EB",
+      "bar": "#A74B25"
+    }
+  }
+}
