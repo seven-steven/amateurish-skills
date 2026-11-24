@@ -26,8 +26,10 @@ function pathToFileURL(p: string): string {
   return `file://${p.split(path.sep).map(encodeURIComponent).join("/").replace(/^\/?/, "/")}`;
 }
 
-// user config and runtime state live OUTSIDE the skill dir so `skills add` reinstalls never clobber them
-const CONFIG = path.join(os.homedir(), ".config", "skills", "publish-to-wxmp", "config.json");
+// User config, custom themes and runtime state live outside the skill installation.
+const CONFIG_DIR = path.join(os.homedir(), ".config", "skills", "publish-to-wxmp");
+const CONFIG = path.join(CONFIG_DIR, "config.json");
+const THEMES_DIR = path.join(CONFIG_DIR, "themes");
 const RUNTIME = envHome("WXMP_STATE_DIR") ?? path.join(os.homedir(), ".local", "state", "wxmp-publisher");
 function envHome(k: string): string | undefined {
   const v = process.env[k]?.trim();
@@ -37,7 +39,6 @@ function envHome(k: string): string | undefined {
 const RUNTIME_OUT = path.join(RUNTIME, "output");
 const IMAGE_CACHE = path.join(RUNTIME, "image-cache.json");
 const DRAFTS = path.join(RUNTIME, "drafts.json");
-const THEMES_DIR = path.join(HERE, "..", "themes");
 
 // Migrate runtime state only from the legacy skill-local `.bin/` layout.
 const LEGACY_BIN = path.join(HERE, "..", ".bin");
@@ -150,7 +151,7 @@ function loadTheme(name: string): Theme {
   const builtins = builtinThemes();
   if (builtins[name]) return builtins[name] as Theme;
   const file = ["yaml", "yml"].map(e => path.join(THEMES_DIR, `${name}.${e}`)).find(fs.existsSync);
-  if (!file) throw new Error(`theme not found: ${name} (see --list-themes)`);
+  if (!file) throw new Error(`theme not found: ${name} (see wxpush themes; custom themes: ${THEMES_DIR})`);
   let spec: { base_theme?: string } & Theme;
   try { spec = yaml.parse(fs.readFileSync(file, "utf8"), { implicitEmptyMapsAsNull: ["pele"] }) as typeof spec; }
   catch (error) { throw new Error(`${file}: ${(error as Error).message}`); }

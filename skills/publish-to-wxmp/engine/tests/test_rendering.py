@@ -1,6 +1,5 @@
 """Regression tests through the real CLI, parsing HTML instead of grepping CSS."""
 import os
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -68,24 +67,17 @@ class RenderingTests(unittest.TestCase):
     def build(self, theme, custom_theme=None, note_text=NOTE):
         with tempfile.TemporaryDirectory(prefix="wxmp-render-test-") as directory:
             directory = Path(directory)
-            project = ROOT
             if custom_theme is not None:
-                # Exercise discovery and base_theme inheritance without writing
-                # fixtures into the user's real skill/themes or runtime state.
-                project = directory / "project"
-                shutil.copytree(ROOT / "scripts", project / "scripts")
-                (project / "engine").mkdir()
-                for bundle in ("engine.mjs", "diagrams.bundle.mjs"):
-                    shutil.copy2(ROOT / "engine" / bundle, project / "engine" / bundle)
-                (project / "themes").mkdir()
-                (project / f"themes/{theme}.yaml").write_text(custom_theme, encoding="utf-8")
+                themes = directory / ".config/skills/publish-to-wxmp/themes"
+                themes.mkdir(parents=True)
+                (themes / f"{theme}.yaml").write_text(custom_theme, encoding="utf-8")
             note = directory / "note.md"
             out = directory / "out"
             note.write_text(note_text, encoding="utf-8")
             result = subprocess.run(
-                ["node", str(project / "scripts/wxpush.mts"), "build", str(note),
+                ["node", str(ROOT / "scripts/wxpush.mts"), "build", str(note),
                  "--theme", theme, "--out", str(out)],
-                cwd=project, capture_output=True, text=True, timeout=15,
+                cwd=directory, capture_output=True, text=True, timeout=15,
                 env={**os.environ, "WXMP_STATE_DIR": str(directory / "state"),
                      "HOME": str(directory)},
 

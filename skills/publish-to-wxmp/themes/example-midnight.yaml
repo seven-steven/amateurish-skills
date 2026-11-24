@@ -1,5 +1,5 @@
 # Independent example: teal article accents with an explicitly dark diagram canvas.
-# Select with build <note.md> --theme example-midnight; see WXPUSH.md#themes.
+# Copy to the user themes directory before selecting it; see WXPUSH.md#themes.
 base_theme: grace
 base:
   "--md-primary-color": "#176b64"

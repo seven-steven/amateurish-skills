@@ -1,4 +1,4 @@
-# example custom theme — rename file to your theme name
+# Example custom theme — copy to the user themes directory (see WXPUSH.md#themes).
 base_theme: grace
 base:
   "--md-primary-color": "#1a7f37"

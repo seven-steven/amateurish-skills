@@ -54,14 +54,14 @@ Front-matter `wechat: {title, digest, cover, author, source_url}` 覆盖默认�
 
 ## 5. 主题系统(完整)
 
-- 主题 = `skills/publish-to-wxmp/themes/<name>.yaml`,文件名即主题名。
+- 自定义主题位于 `~/.config/skills/publish-to-wxmp/themes/<name>.yaml`（也支持 `.yml`），与 `config.json` 同级，不受 `XDG_CONFIG_HOME` 影响。文件名即主题名。
 - 结构:`base_theme`(可继承 default/grace/simple/geek-black)+ `base`/`block`/`inline` 三段 CSS 属性映射,以及可选 `renderOptions` 和 `pele` 配色映射。
 - `block.h1_content` 至 `block.h6_content` 可选:为标题增加独立的 `<span class="content">`,支持外层通栏背景/细线与内层文字装饰;未配置时保持原来的单层标题。
 - `renderOptions` 可选:`isMacCodeBlock`(代码块交通灯)、`isShowLineNumber`(行号)。与主题一起继承,未配置时沿用 CLI 默认值。
 - 合并语义:**深合并**——用户样式递归覆盖到基础主题上,只写要改的属性。
-- 发现机制:`themes`(或 `--list-themes`)列出内置 default、grace、simple、geek-black + themes/ 目录下全部 YAML。同一主题选择决定正文与图表,没有独立图表主题参数或全局配色段。
+- 发现机制:`themes` 列出内置 default、grace、simple、geek-black 与用户目录中的 YAML；不搜索安装目录或自动迁移已有主题。同一主题选择决定正文与图表,没有独立图表主题参数或全局配色段。
 - geek-black 真源为 `skills/publish-to-wxmp/engine/geek-black.theme.mjs`,保留原 `#nice` CSS 的双层标题,并补齐参考效果依赖的基础间距、浅灰引用和代码块背景;代码文字为深灰,行号独立内联为浅灰,不依赖参考站点的样式表。
-- 引擎内置主题随 engine bundle 分发(不依赖 node_modules)。独立示例 [`example-midnight.yaml`](../skills/publish-to-wxmp/themes/example-midnight.yaml) 继承 grace,展示正文强调色、深色图表和八个系列槽位;不修改现有主题或默认选择。
+- 引擎内置主题随 engine bundle 分发(不依赖 node_modules)。独立示例 [`example-midnight.yaml`](../skills/publish-to-wxmp/themes/example-midnight.yaml) 继承 grace,展示正文强调色、深色图表和八个系列槽位，复制到用户主题目录即可选择。
 
 ### Pele 配色
 
@@ -95,11 +95,11 @@ Pele 是渲染器,不是新文章主题。主题可选 `pele` 的所有字段如
 - 构建入口注册本地内置主题,再由 `skills/publish-to-wxmp/engine/local-patches.mjs` 对 bundle 应用受校验的补丁:HTML 样式属性转义、可选双层标题、代码布局内联。补丁不匹配时中止,不覆盖已有产物。
 - CLI 保存 `postProcessHtml` 的结果(包含容器和引用链接),去掉微信不保留的 `<style>`;排版所需规则必须内联。
 - 保存前经 `skills/publish-to-wxmp/engine/wechat-styles.mjs` 的 `inlineWechatStyles` 输出兼容层:用 HTML/CSS 解析器按元素作用域展开 `var(...)`(含继承、局部变量与回退),再移除 `--...` 自定义属性声明。真实草稿最小复现表明,微信会丢弃自定义属性之后的普通样式;仅浏览器预览正常不足以验证。preview/upload/push 必须共用这一产物,不能只在发送时修补。解析器一起打包进 engine,不增加 CLI 运行时依赖。
-- 升级引擎 = 改版本号重跑构建脚本,重新提交产物。内置主题、补丁与微信输出兼容层改动也必须重建,不可只手改 bundle;安装目录 `themes/` 的自定义 YAML 则由 CLI 直接加载,无需重建 bundle。
+- 升级引擎 = 改版本号重跑构建脚本,重新提交产物。内置主题、补丁与微信输出兼容层改动也必须重建,不可只手改 bundle;用户自定义 YAML 则由 CLI 直接加载,无需重建 bundle。
 - 回归测试:`npm run test:engine`(Node ≥22.20 + Python 3)经实际 CLI 构建并解析 HTML;`npm run test:browser` 用主机已安装的 Google Chrome 检查 375px/768px 下的计算样式和布局,而非仅搜索样式字符串。`npm test` 同时覆盖类型检查、布局、引擎、服务端与浏览器测试;独立测试 workflow 在 macOS/Linux 上执行同一命令。安装和覆盖范围见 [skills/publish-to-wxmp/engine/tests/README.md](../skills/publish-to-wxmp/engine/tests/README.md)。
 - 图表:锁依赖的 Pele bundle、共享的 resvg 渲染模块和随包完整 Noto 简体中文字体,离线成图。先由 agent 将 ASCII/说明性文本改写为 Mermaid,CLI 只做确定性渲染;不调用模型。全部 Pele 内置类型走统一入口,首版仅支持自包含文字/形状。图内网页链接移至图注并沿用脚注;外部图片、自定义图标、公式、缺字、可检测裁切及超限均使构建失败。保留 Mermaid、SVG、PNG,发布只嵌入 PNG;手机预览和用户确认仍是最终验收。
 - 图表配色经 CLI 统一加载并校验主题后传入图表编译模块,不在 preview/upload/push 分别修图。保存 SVG 前将配色变量落实为具体样式并移除自定义属性,发布仍只嵌入 PNG。保持固定 Pele、随包中文字体、字号和栅格链路,深色背景不能使空图校验误判有效。所有影响最终图像的有效输入(包括仅 PNG 画布背景)均纳入图表资产/缓存身份;相同输入、有效主题与参考时间产物确定。原笔记不变,继续保留可编辑源码、SVG 与 PNG。
-- `publish-to-wxmp` 的 Mermaid 布局、字体与发布校验，以及 `wxmp-cover` 的文字封面布局，分别保留在各自 skill。两者只共享 `tools/wxmp-graphics/` 中的 SVG → PNG 实现和构建依赖锁。`npm run build:wxmp-graphics` 重建 `diagrams.bundle.mjs` 并向两个安装目录分发相同的本地渲染文件；`diagram-assets/manifest.json` 继续用于图表 WASM/字体完整性检查。运行时不跨 skill 引用。测试通过真实 CLI 消费提交的 bundle/字体/WASM,自定义主题使用临时安装副本,全部新测试从根 `npm test` 可达。
+- `publish-to-wxmp` 的 Mermaid 布局、字体与发布校验，以及 `wxmp-cover` 的文字封面布局，分别保留在各自 skill。两者只共享 `tools/wxmp-graphics/` 中的 SVG → PNG 实现和构建依赖锁。`npm run build:wxmp-graphics` 重建 `diagrams.bundle.mjs` 并向两个安装目录分发相同的本地渲染文件；`diagram-assets/manifest.json` 继续用于图表 WASM/字体完整性检查。运行时不跨 skill 引用。测试通过真实 CLI 消费提交的 bundle/字体/WASM,自定义主题写入隔离的临时 HOME,全部新测试从根 `npm test` 可达。
 - 归属:排版引擎源自 doocs/md(Apache-2.0);图表发行物同时保留 Pele 的 MIT/ISC、resvg 的 MPL/对应源码信息与字体 OFL,见 `skills/publish-to-wxmp/engine/ATTRIBUTION.md`。
 
 ## 7. Server 设计

@@ -48,7 +48,7 @@ HTML 解析测试和浏览器测试共享 `fixtures/geek-black.md`。浏览器�
 
 ## 图表配色与发行物验证
 
-唯一主测试边界是用户实际调用的 `wxpush` CLI,不 mock Pele、字体或栅格化。配色测试复制 scripts、themes、提交的 `engine.mjs`/`diagrams.bundle.mjs` 和完整 `diagram-assets/`(含 manifest、WASM、字体)到临时安装目录,不向真实工作树写入主题。示例可用性回归通过 `themes` 发现 `example-midnight`,再离线 `build --theme example-midnight`,解析具体 SVG 样式、真实解码 PNG 并检查画布/可见颜色及正文继承,不是只测 YAML 或内部对象。字段最终契约见 [WXPUSH Themes](../../WXPUSH.md#themes),消费检查见 [构建新鲜度](../../WXPUSH.md#构建新鲜度),手机确认步骤见 [DIAGRAMS.md](../../DIAGRAMS.md)。
+唯一主测试边界是用户实际调用的 `wxpush` CLI,不 mock Pele、字体或栅格化。配色测试从临时安装副本运行真实 CLI,将自定义主题写入临时 HOME 下的用户主题目录。示例回归先验证安装目录中的 `example-midnight` 不被列出或加载,再将其复制到用户主题目录,用 `themes` 发现并离线 `build --theme example-midnight`,解析 SVG 与 PNG,检查画布/可见颜色及正文继承。字段最终契约见 [WXPUSH Themes](../../WXPUSH.md#themes),消费检查见 [构建新鲜度](../../WXPUSH.md#构建新鲜度),手机确认步骤见 [DIAGRAMS.md](../../DIAGRAMS.md)。
 
 `fixtures/diagram-palette-baseline.json` 是变更前 CLI(`5052bf4baab3734b7c819c96464948929459de51`)对同目录 `.md`、default 主题、参考时间 `1767225600000` 及 `Asia/Shanghai` 时区的资产名/SHA-256 基线。甘特图日期解析和坐标轴受本地时区影响,仅固定时间戳不足以复现字节;消费该基线的测试从 fixture 读取 `timezone`,仅为 CLI 子进程设置 `TZ`,不依赖开发主机或 CI runner 的默认时区,也不改变生产 CLI 的时区行为。无 `pele` 和空映射回归对照这份独立旧基线,不能用新实现重录来自证兼容。背景单独变化也应改变实际 PNG 与资产身份,相同有效输入应稳定复现。
 

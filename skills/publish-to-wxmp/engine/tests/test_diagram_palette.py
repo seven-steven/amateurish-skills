@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import shutil
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
@@ -20,6 +21,8 @@ class DiagramPaletteTests(test_artifacts.CLIEnvironment):
     def setUp(self):
         super().setUp()
         self.install_skill()
+        self.themes_dir = self.directory / ".config/skills/publish-to-wxmp/themes"
+        self.themes_dir.mkdir(parents=True)
         guard = self.directory / "offline.cjs"
         guard.write_text("globalThis.fetch = () => { throw Error('network forbidden'); };\n")
         self.env["NODE_OPTIONS"] = f"--require={guard}"
@@ -30,7 +33,7 @@ class DiagramPaletteTests(test_artifacts.CLIEnvironment):
             text += "pele:\n" + "".join(f'  {key}: "{value}"\n' for key, value in palette.items())
         elif palette is not None:
             text += "pele: {}\n"
-        target = self.installed / "themes/palette.yaml"
+        target = self.themes_dir / "palette.yaml"
         target.write_text(text)
         return target
 
@@ -51,7 +54,12 @@ class DiagramPaletteTests(test_artifacts.CLIEnvironment):
         self.assertNotIn("--pele-", text)
         return text, colors, png
 
-    def test_example_midnight_is_discoverable_and_builds_coordinated_article_and_dark_diagram(self):
+    def test_copied_example_midnight_is_discoverable_and_builds_coordinated_article_and_dark_diagram(self):
+        self.assertNotIn("example-midnight\tcustom", self.cli("themes").stdout)
+        missing = self.cli("build", self.note, "--theme", "example-midnight", success=False)
+        self.assertIn("theme not found: example-midnight", missing.stderr)
+
+        shutil.copy2(self.installed / "themes/example-midnight.yaml", self.themes_dir)
         listing = self.cli("themes")
         self.assertIn("example-midnight\tcustom", listing.stdout)
         svg, colors, png = self.build_chart(theme="example-midnight")
@@ -234,8 +242,7 @@ class DiagramPaletteTests(test_artifacts.CLIEnvironment):
 
     def test_global_theme_selection_and_explicit_override_preserve_inherited_render_options(self):
         self.theme({"surface": "#d32f87"}, extra='block:\n  p:\n    letter-spacing: "2px"\n')
-        config = self.directory / ".config/skills/publish-to-wxmp/config.json"
-        config.parent.mkdir(parents=True)
+        config = self.themes_dir.parent / "config.json"
         config.write_text(json.dumps({"theme": "palette"}))
         self.note.write_text(f'# 选择主题\n\n段落\n\n```text\nline 1\nline 2\n```\n\n```mermaid\n{FLOW}\n```\n')
         self.cli("build")

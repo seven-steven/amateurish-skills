@@ -7,7 +7,7 @@ Env: `WXMP_API_BASE`(token 服务地址,如 `https://wx.example.com`,也可由�
 ## Commands
 
 - `doctor` — preflight:排版及图表 bundle、WASM/中文字体完整性、config env、API 可达性、主题列表。每次会话首个发布前跑。
-- `themes` — 列出全部主题(内置 + `themes/` 自定义,带 `*` 标记)。
+- `themes` — 列出内置主题和[自定义主题](#themes)，标注来源(`builtin` / `custom`)。
 - `build <note.md> [--theme <name>] [--out <dir>]` — markdown → 内联样式 HTML;Mermaid 图块自动经 Pele → SVG → PNG。默认在机器本地状态的 output 下创建唯一 run dir;`latest` 指向本次 run,包括失败构建(不可上传/推草稿)。指定 `--out` 时同样登记本次构建。
 - `upload <note.md> [--out <dir>]` — 读取已完成构建中的图片引用(含生成图),上传微信 CDN(`PUT <base>/publish/img`),重写该 run 的 md/html;哈希缓存于 `~/.local/state/wxmp-publisher/image-cache.json`,幂等可重试。原笔记正文不变。
 - `push <note.md> --title <t> [--digest <d>] [--author <a>] [--source-url <u>]` — 前提 build+upload 已完成:上传封面素材、创建草稿。打印 `media_id`。默认总是新建草稿。
@@ -47,7 +47,9 @@ Env: `WXMP_API_BASE`(token 服务地址,如 `https://wx.example.com`,也可由�
 
 ## Themes
 
-自定义主题 = `skills/publish-to-wxmp/themes/<name>.yaml`:
+自定义主题文件放在 `~/.config/skills/publish-to-wxmp/themes/<name>.yaml`（也支持 `.yml`）。此目录与 `config.json` 同级，不受 `XDG_CONFIG_HOME` 影响。安装目录的 `themes/` 仅提供示例；CLI 不从旧位置加载或自动迁移主题。已有自定义主题请手动复制到新目录。
+
+主题示例：
 
 ```yaml
 base_theme: grace        # 可选,继承 default/grace/simple/geek-black
@@ -91,11 +93,14 @@ pele:                   # 可选,仅覆盖需要改变的图表默认色
 - 没有 `pele` 或使用 `pele: {}` 时保持旧图表资产名称、SVG 和 PNG 字节;现有内置主题不自动获得新色,正文主色也不推导图表颜色。
 - 这里只开放颜色,不开放字体、字号、圆角、字重、布局或尺寸配置;原有中文字体、隐藏标签/缺字、裁切和尺寸校验继续有效。
 
-完整的独立示例是 [`themes/example-midnight.yaml`](themes/example-midnight.yaml):继承 grace 的正文,以青绿色正文强调色搭配显式深色图表及八个系列槽位。现有主题不变,默认主题也不变。可直接运行:
+随包示例 [`themes/example-midnight.yaml`](themes/example-midnight.yaml) 继承 grace 的正文,以青绿色正文强调色搭配深色图表及八个系列槽位。复制到用户主题目录后即可选择,不改变默认主题:
 
 ```bash
-node <skill>/scripts/wxpush.mts themes
-node <skill>/scripts/wxpush.mts build <note.md> --theme example-midnight
+theme_dir="$HOME/.config/skills/publish-to-wxmp/themes"
+mkdir -p "$theme_dir"
+cp -n "<skill>/themes/example-midnight.yaml" "$theme_dir/"
+node "<skill>/scripts/wxpush.mts" themes
+node "<skill>/scripts/wxpush.mts" build "<note.md>" --theme example-midnight
 ```
 
 修改主题后按[构建新鲜度](#构建新鲜度)重新构建、上传和预览;图表检查步骤见 [DIAGRAMS.md](DIAGRAMS.md)。

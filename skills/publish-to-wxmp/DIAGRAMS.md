@@ -24,7 +24,7 @@ Done when: all generated images have been inspected at phone width, match their 
 
 ## Theme colors
 
-Use the normal article theme selection: explicit `build --theme` overrides global `theme`, then falls back to `default`. There is no separate diagram-theme option. The optional `pele` mapping, complete allowed-field table, quoted opaque `#RGB`/`#RRGGBB` format and strict validation rules live in [WXPUSH.md](WXPUSH.md#pele-配色契约). Invalid palettes fail even without diagrams and identify the theme file and field; preserve that diagnostic rather than silently dropping colors. [`themes/example-midnight.yaml`](themes/example-midnight.yaml) is an independent, usable example with coordinated article accents and a dark diagram canvas.
+Use the normal article theme selection: explicit `build --theme` overrides global `theme`, then falls back to `default`. There is no separate diagram-theme option. The optional `pele` mapping, complete allowed-field table, quoted opaque `#RGB`/`#RRGGBB` format and strict validation rules live in [WXPUSH.md](WXPUSH.md#pele-配色契约). Invalid palettes fail even without diagrams and identify the theme file and field; preserve that diagnostic rather than silently dropping colors. For coordinated article accents and a dark diagram canvas, copy the [bundled example](themes/example-midnight.yaml) into the [user themes directory](WXPUSH.md#themes) before selecting it.
 
 Colors apply per field: **explicit diagram colors > theme colors > Pele defaults**. Literal `style`/`classDef` colors and initialization/frontmatter `themeVariables` take precedence; unspecified series slots still inherit the theme or default, without renumbering. Variables are resolved to concrete SVG styles before saving; published articles embed only the PNG.
 

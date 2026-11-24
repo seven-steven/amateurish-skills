@@ -24,11 +24,11 @@ class ThemeFreshnessTests(test_artifacts.CLIEnvironment):
             opener.chmod(0o755)
         self.env["PATH"] = str(bin_dir) + os.pathsep + self.env["PATH"]
         self.install_skill()
-        self.theme = self.installed / "themes/selected.yaml"
+        self.config = self.directory / ".config/skills/publish-to-wxmp/config.json"
+        self.theme = self.config.with_name("themes") / "selected.yaml"
+        self.theme.parent.mkdir(parents=True)
         self.theme.write_text('base_theme: geek-black\nblock:\n  h2:\n    color: "#123456"\n')
-        config = self.directory / ".config/skills/publish-to-wxmp/config.json"
-        config.parent.mkdir(parents=True)
-        config.write_text(json.dumps({"theme": "default"}))
+        self.config.write_text(json.dumps({"theme": "default"}))
 
     def build_selected(self, *args):
         self.cli("build", self.note, "--theme", "selected", *args)
@@ -124,20 +124,17 @@ class ThemeFreshnessTests(test_artifacts.CLIEnvironment):
         self.cli("upload")
         self.theme.write_text('block:\n  h2:\n    color: "#123456"\n# Same effective configuration\nbase_theme: geek-black\n'
                               'renderOptions:\n  isMacCodeBlock: false\n  isShowLineNumber: true\npele: {}\n')
-        unrelated = self.installed / "themes/unrelated.yaml"
-        unrelated.write_text('pele: invalid\n')
-        config = self.directory / ".config/skills/publish-to-wxmp/config.json"
-        config.write_text(json.dumps({"theme": "unrelated"}))
+        self.theme.with_name("unrelated.yaml").write_text('pele: invalid\n')
+        self.config.write_text(json.dumps({"theme": "unrelated"}))
         self.cli("upload")
         self.cli("push")
         self.cli("push", self.note, "--update")
         self.assertEqual([path for path, _ in self.requests], ["/publish/img", "/publish", "/publish/update"])
 
     def test_global_selection_is_recorded_and_not_replaced_by_later_default(self):
-        config = self.directory / ".config/skills/publish-to-wxmp/config.json"
-        config.write_text(json.dumps({"theme": "selected"}))
+        self.config.write_text(json.dumps({"theme": "selected"}))
         self.cli("build")
-        config.write_text(json.dumps({"theme": "default"}))
+        self.config.write_text(json.dumps({"theme": "default"}))
         self.cli("upload")
         self.theme.write_text(self.theme.read_text().replace("#123456", "#654321"))
         self.assert_consumers_reject()
