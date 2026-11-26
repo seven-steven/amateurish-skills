@@ -37,6 +37,15 @@ npx skills add seven-steven/amateurish-skills --skill scys-title
 - 各 skill 保留自己的字段、结构和默认值;没有配置需求的 skill 无需创建空文件。
 - 配置与安装目录分离,重装或更新 skill 不覆盖用户设置。此约定不改变运行状态、缓存、日志、主题、专用凭证存储或目标项目配置的位置。
 
+## 公开发布
+
+博客和公众号发布技能共用[发布前脱敏规范](docs/publication-redaction.md)。修改规范后，在仓库根目录同步随包副本，让两个技能单独安装时也能读取：
+
+```bash
+cp docs/publication-redaction.md skills/publish-to-blog/REDACTION.md
+cp docs/publication-redaction.md skills/publish-to-wxmp/REDACTION.md
+```
+
 ## 服务端
 
 `publish-to-wxmp` 需要配套的 token 服务(持有 AppSecret、统一管理 access_token,Docker 部署):部署见 [wxmp-server/deploy.md](wxmp-server/deploy.md)。

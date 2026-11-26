@@ -26,33 +26,36 @@ Create a unique task workspace at `<system TMP>/.skills/publish-to-wxmp/<task-id
 
 Resolve local image and cover references against the original note's directory; use absolute paths in the publishing copy or copy the assets into the workspace and adjust their references. Keep the original assets in place.
 
-Decisions autonomous; body copy stays zh-CN and near-verbatim. Adjustments allowed, exhaustive:
+Decisions are autonomous unless redaction needs user input. Body copy stays zh-CN and near-verbatim. Adjustments allowed, exhaustive:
 
 - `title` ≤ 64 chars from front-matter or the H1 (rephrase for a Wechat audience if too plain).
 - `digest` ≤ 120 chars: one sentence the reader gains.
 - **Note references**: Adapt every reference to a note in the article copy, including external note URLs, wiki links, relative note paths, and wording such as “see this note”. Replace it with a confirmed published Wechat article URL for the referenced content, or rewrite the surrounding passage in context so it stands alone without the note reference. When no such URL is known, rewrite.
-- **Web references**: Preserve non-note web references and their surrounding prose. Keep Markdown links; for bare non-Wechat URLs or links whose label is the URL, use a short contextual label instead (`[label](URL)`). `build` converts these links to numbered endnotes and deduplicates by URL; `mp.weixin.qq.com` article links remain clickable.
+- **Web references**: Preserve non-sensitive, non-note web references and their surrounding prose. Keep Markdown links; for bare non-Wechat URLs or links whose label is the URL, use a short contextual label instead (`[label](URL)`). `build` converts these links to numbered endnotes and deduplicates by URL; `mp.weixin.qq.com` article links remain clickable.
 - **Diagrams**: Render only the note's existing fenced `mermaid` blocks following [`DIAGRAMS.md`](DIAGRAMS.md).
-- **Code**: Preserve actual source code, commands, configuration, and verbatim logs/output.
+- **Code**: Preserve actual source code, commands, configuration, and verbatim logs/output except where redaction is needed.
+- **Redaction**: Read and follow [public publishing redaction](REDACTION.md) for the publishing copy, including Mermaid sources, images, and metadata.
 - Front-matter and scaffolding are omitted from the rendered article (the tool handles front-matter reads).
 
-Done when: the adapted Markdown publishing copy exists in the task workspace, its local image and cover references resolve, every note reference is adapted, and non-Wechat web references in prose have link labels distinct from their URLs. Reuse this workspace and copy for all subsequent CLI commands and revisions within the task.
+Done when: the adapted Markdown publishing copy exists in the task workspace, its local image and cover references resolve, every note reference is adapted, non-Wechat web references in prose have link labels distinct from their URLs, and the copy passes redaction. Reuse this workspace and copy for all subsequent CLI commands and revisions within the task.
 
 ### 3. Build, upload, preview
 
-`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持产物刷新)。Cover per WXPUSH conventions; ask the user only when no cover candidate exists. For diagrams, verify that the uploaded images load and remain legible at phone width, with complete labels and unclipped connectors.
+`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持产物刷新)。Before `upload`, check the built article and all images to be uploaded for redaction, including generated diagrams. Select the cover per WXPUSH conventions; if no candidate exists, ask the user. For diagrams, verify that the uploaded images load and remain legible at phone width, with complete labels and unclipped connectors.
 
 **Themes**: When selecting a custom theme or changing theme styles or diagram colors, follow [wxmp theme design](THEMES.md) for backgrounds, contrast, and narrow-screen layout. Use [WXPUSH Themes](WXPUSH.md#themes) for theme file locations and `pele` settings, and preserve explicit diagram colors.
 
-A change to the selected theme's article styles, render options or diagram colors requires an explicit rebuild, upload and preview before confirmation or push. Preview/upload/draft creation/update reject stale builds before starting a new preview or remote requests; follow [WXPUSH freshness rules](WXPUSH.md#构建新鲜度) rather than reusing old output. A running preview does not watch theme sources; restart it for a new run. Open the preview for the user; apply requested edits and repeat build/upload/preview for changed content or theme.
+A change to the selected theme's article styles, render options or diagram colors requires an explicit rebuild, upload and preview before confirmation or push. Preview/upload/draft creation/update reject stale builds before starting a new preview or remote requests; follow [WXPUSH freshness rules](WXPUSH.md#构建新鲜度) rather than reusing old output. A running preview does not watch theme sources; restart it for a new run. Open the preview for the user; recheck redaction after edits and repeat build/upload/preview for changed content or theme.
 
 Done when: the user confirms the rendered article.
 
 ### 4. Push to draft box
 
+Before creating or updating a draft, check the resolved title, digest, author, source URL, and cover for redaction, including defaults and fallback selections.
+
 `push` with title/digest/author/source-url. Wechat rejects the whole draft on oversize title/digest or a broken cover — the tool validates first. Fix confirmed validation or rejection failures before retrying. If the remote outcome is uncertain, stop and return the receipt in step 5 instead of automatically pushing again.
 
-If the user is unhappy with an already-pushed draft and wants the same draft updated in place (not a new one), run `push --update` after re-running `build` + `upload`; it reuses the recorded `media_id` (`~/.local/state/wxmp-publisher/drafts.json`, or `--media-id` explicitly). The registry is keyed by the publishing copy's absolute path: when updating from a new task workspace, pass the existing draft's `--media-id` explicitly. By default `push` always creates a new draft — only update when the user asks for it.
+If the user is unhappy with an already-pushed draft and wants the same draft updated in place (not a new one), run `push --update` after re-running `build` + `upload` with the same redaction checks; it reuses the recorded `media_id` (`~/.local/state/wxmp-publisher/drafts.json`, or `--media-id` explicitly). The registry is keyed by the publishing copy's absolute path: when updating from a new task workspace, pass the existing draft's `--media-id` explicitly. By default `push` always creates a new draft — only update when the user asks for it.
 
 Done when: `push` prints a `media_id`.
 
