@@ -38,6 +38,8 @@ npx tsx <skill 目录>/scripts/wxpush.mts doctor   # 全绿即就绪
 
 ## 自定义主题
 
+设计或修改主题时，参阅 [wxmp 主题设计指南](THEMES.md)，检查同一套样式在微信亮色、暗色和手机窄屏下的表现。
+
 将自定义主题放在 `~/.config/skills/publish-to-wxmp/themes/<name>.yaml`（也支持 `.yml`），文件名即主题名。已有主题请手动复制到新目录；CLI 不再搜索 skill 安装目录。用 `themes` 查看可用主题。选择优先级为显式 `build --theme <name>` > 全局配置 `theme` > `default`,同时选择正文样式和图表配色。
 
 主题可以增加可选的 `pele` 映射,只写要改的颜色;值使用带引号的 `"#RGB"` 或 `"#RRGGBB"`。全部字段、严格校验、继承及逐项「图内显式 > 主题 > 默认」契约见 [WXPUSH.md](WXPUSH.md#themes)。无 `pele` 或空映射保持旧图表效果和产物,正文主色不会自动推导图表颜色。

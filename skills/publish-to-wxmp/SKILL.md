@@ -40,7 +40,9 @@ Done when: the adapted Markdown publishing copy exists in the task workspace, it
 
 ### 3. Build, upload, preview
 
-`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持产物刷新)。Cover per WXPUSH conventions; ask the user only when no cover candidate exists. For diagrams, verify that the uploaded images load and remain legible at phone width, with complete labels and unclipped connectors. When working with custom themes or diagram colors, follow [WXPUSH Themes](WXPUSH.md#themes) for where to save theme files and how to set `pele` colors; preserve explicit diagram colors and inspect contrast, including the PNG canvas.
+`build` → `upload` → `preview` (upload 后 preview 即真实 CDN 图片预览;`--watch` 支持产物刷新)。Cover per WXPUSH conventions; ask the user only when no cover candidate exists. For diagrams, verify that the uploaded images load and remain legible at phone width, with complete labels and unclipped connectors.
+
+**Themes**: When selecting a custom theme or changing theme styles or diagram colors, follow [wxmp theme design](THEMES.md) for backgrounds, contrast, and narrow-screen layout. Use [WXPUSH Themes](WXPUSH.md#themes) for theme file locations and `pele` settings, and preserve explicit diagram colors.
 
 A change to the selected theme's article styles, render options or diagram colors requires an explicit rebuild, upload and preview before confirmation or push. Preview/upload/draft creation/update reject stale builds before starting a new preview or remote requests; follow [WXPUSH freshness rules](WXPUSH.md#构建新鲜度) rather than reusing old output. A running preview does not watch theme sources; restart it for a new run. Open the preview for the user; apply requested edits and repeat build/upload/preview for changed content or theme.
 

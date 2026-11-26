@@ -47,6 +47,8 @@ Env: `WXMP_API_BASE`(token 服务地址,如 `https://wx.example.com`,也可由�
 
 ## Themes
 
+新建或修改主题时，先看 [wxmp 主题设计指南](THEMES.md)；下文是 CLI 配置契约。
+
 自定义主题文件放在 `~/.config/skills/publish-to-wxmp/themes/<name>.yaml`（也支持 `.yml`）。此目录与 `config.json` 同级，不受 `XDG_CONFIG_HOME` 影响。安装目录的 `themes/` 仅提供示例；CLI 不从旧位置加载或自动迁移主题。已有自定义主题请手动复制到新目录。
 
 主题示例：
