@@ -70,7 +70,11 @@ test('configuration sets mode and outputDir; invocation overrides both for one r
   assert.ok(fs.existsSync(first.files[0].png));
   const override = render('--mode', '两张', '--output-dir', 'one off', ...titles);
   assert.deepEqual(override.files.map(f => f.layout), ['lead', 'secondary']);
-  assert.equal(path.dirname(path.dirname(override.files[0].png)), path.join(dir, 'one off'));
+  // The child can see a canonical cwd even when the temp directory uses a symlink (macOS /var).
+  assert.equal(
+    fs.realpathSync(path.dirname(path.dirname(override.files[0].png))),
+    fs.realpathSync(path.join(dir, 'one off')),
+  );
   assert.equal(fs.readFileSync(config, 'utf8'), original);
 });
 
