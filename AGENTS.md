@@ -10,16 +10,7 @@
 
 When adding or changing a skill's user settings, follow the [configuration convention](README.md#配置约定).
 
-## Agent skills
+## Publishing skills (`publish-to-*`)
 
-### Issue tracker
+Before adding or updating any `publish-to-*` skill, extract rules applicable to every `publish-to-*` skill into [the shared publish-to rules](docs/publish-to-rules.md) first, reference them from each `publish-to-*` skill's `SKILL.md`, and sync `docs/publish-to-rules.md` to every `skills/publish-to-*/PUBLISH-RULES.md` so standalone installs stay self-contained. Every `publish-to-*` skill sets `disable-model-invocation: true` in its `SKILL.md` frontmatter.
 
-Issues live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default five-label vocabulary (`needs-triage` etc.), recorded as `Status:` lines. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

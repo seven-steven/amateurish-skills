@@ -10,6 +10,8 @@ Take a note, adapt it into a Wechat article, render Wechat-native HTML, push it 
 
 The tool layer is [`WXPUSH.md`](WXPUSH.md) — read it first; its command contract is the source of truth. Never call the Wechat API directly; the `access_token` lives only on the server.
 
+Read and follow [shared publish-to rules](PUBLISH-RULES.md) throughout this workflow (publishing copy & verbatim fidelity, autonomous decisions & publish confirmation, note references, redaction).
+
 The original note, including its body and front-matter, is read-only throughout this workflow. Make all adaptations in the publishing copy and return push facts to the caller. Note-side rules own whether and how to update the original note and persist returned temporary assets; leave those actions to them. CLI artifacts, caches and the draft registry keep their existing behavior.
 
 ## Steps
@@ -26,15 +28,14 @@ Create a unique task workspace at `<system TMP>/.skills/publish-to-wxmp/<task-id
 
 Resolve local image and cover references against the original note's directory; use absolute paths in the publishing copy or copy the assets into the workspace and adjust their references. Keep the original assets in place.
 
-Decisions are autonomous unless redaction needs user input. Body copy stays zh-CN and near-verbatim. Adjustments allowed, exhaustive:
+Body copy stays zh-CN. Adjustments allowed beyond [shared publish-to rules](PUBLISH-RULES.md), exhaustive:
 
 - `title` ≤ 64 chars from front-matter or the H1 (rephrase for a Wechat audience if too plain).
 - `digest` ≤ 120 chars: one sentence the reader gains.
-- **Note references**: Adapt every reference to a note in the article copy, including external note URLs, wiki links, relative note paths, and wording such as “see this note”. Replace it with a confirmed published Wechat article URL for the referenced content, or rewrite the surrounding passage in context so it stands alone without the note reference. When no such URL is known, rewrite.
+- **Note references**: Follow [note references](PUBLISH-RULES.md#笔记引用适配) for the article copy (target platform: Wechat Official Account).
 - **Web references**: Preserve non-sensitive, non-note web references and their surrounding prose. Keep Markdown links; for bare non-Wechat URLs or links whose label is the URL, use a short contextual label instead (`[label](URL)`). `build` converts these links to numbered endnotes and deduplicates by URL; `mp.weixin.qq.com` article links remain clickable.
 - **Diagrams**: Render only the note's existing fenced `mermaid` blocks following [`DIAGRAMS.md`](DIAGRAMS.md).
-- **Code**: Preserve actual source code, commands, configuration, and verbatim logs/output except where redaction is needed.
-- **Redaction**: Read and follow [public publishing redaction](REDACTION.md) for the publishing copy, including Mermaid sources, images, and metadata.
+- **Redaction**: Follow [redaction](PUBLISH-RULES.md#公开发布前脱敏) for the publishing copy, including Mermaid sources, images, and metadata.
 - Front-matter and scaffolding are omitted from the rendered article (the tool handles front-matter reads).
 
 Done when: the adapted Markdown publishing copy exists in the task workspace, its local image and cover references resolve, every note reference is adapted, non-Wechat web references in prose have link labels distinct from their URLs, and the copy passes redaction. Reuse this workspace and copy for all subsequent CLI commands and revisions within the task.

@@ -39,11 +39,11 @@ npx skills add seven-steven/amateurish-skills --skill scys-title
 
 ## 公开发布
 
-博客和公众号发布技能共用[发布前脱敏规范](docs/publication-redaction.md)。修改规范后，在仓库根目录同步随包副本，让两个技能单独安装时也能读取：
+所有 `publish-to-*` 发布技能共用[publish-to 公共规则](docs/publish-to-rules.md)（含发布副本与正文保真、自主决策与发布前确认、笔记引用适配、发布前脱敏）。新增或更新 `publish-to-*` 技能前，先将适用于每个发布技能的规则提取到该文档；修改规范后，在仓库根目录同步随包副本，让各技能单独安装时也能读取：
 
 ```bash
-cp docs/publication-redaction.md skills/publish-to-blog/REDACTION.md
-cp docs/publication-redaction.md skills/publish-to-wxmp/REDACTION.md
+cp docs/publish-to-rules.md skills/publish-to-blog/PUBLISH-RULES.md
+cp docs/publish-to-rules.md skills/publish-to-wxmp/PUBLISH-RULES.md
 ```
 
 ## 服务端
@@ -56,7 +56,7 @@ cp docs/publication-redaction.md skills/publish-to-wxmp/REDACTION.md
 | --- | --- |
 | `skills/` | 各 skill(自包含:SKILL.md + scripts + 主题 + README) |
 | `wxmp-server/` | publish-to-wxmp 的 token 服务(Flask + Docker + GHCR 镜像) |
-| `docs/` | 设计 spec(`spec.md`)与安全设计(`security.md`) |
+| `docs/` | 设计 spec(`spec.md`)、安全设计(`security.md`)与发布公共规则(`publish-to-rules.md`) |
 
 ## 开发
 

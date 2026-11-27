@@ -52,17 +52,64 @@ class LayoutIntegrityTests(unittest.TestCase):
             self.assertTrue((ROOT / "wxmp-server" / ref).exists(),
                             f"compose build context missing: {ref}")
 
+    def test_publish_to_skills_ship_and_reference_shared_rules(self):
+        source = ROOT / "docs/publish-to-rules.md"
+        self.assertTrue(source.is_file() and not source.is_symlink(), f"missing shared rules doc: {source}")
+        source_digest = hashlib.sha256(source.read_bytes()).hexdigest()
+
+        source_text = source.read_text(encoding="utf-8")
+        source_headings = {
+            re.sub(r"\s+", "-", m.group(1).strip().lower())
+            for m in re.finditer(r"^#{1,6}\s+(.+)$", source_text, re.MULTILINE)
+        }
+
+        publish_skills = sorted(p for p in (ROOT / "skills").glob("publish-to-*") if p.is_dir())
+        self.assertTrue(publish_skills, "sanity: no publish-to-* skills found")
+
+        for skill_dir in publish_skills:
+            with self.subTest(skill=skill_dir.name):
+                bundled = skill_dir / "PUBLISH-RULES.md"
+                self.assertTrue(bundled.is_file() and not bundled.is_symlink(), f"missing standalone file: {bundled}")
+                self.assertEqual(
+                    hashlib.sha256(bundled.read_bytes()).hexdigest(),
+                    source_digest,
+                    f"{bundled.relative_to(ROOT)} drifted from docs/publish-to-rules.md",
+                )
+                skill_md = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+                self.assertIn("PUBLISH-RULES.md", skill_md, f"{skill_dir.name}/SKILL.md must reference PUBLISH-RULES.md")
+                frontmatter = re.match(r"^---\n(.*?)\n---\n", skill_md, re.DOTALL)
+                self.assertIsNotNone(frontmatter, f"{skill_dir.name}/SKILL.md missing YAML frontmatter")
+                self.assertRegex(
+                    frontmatter.group(1),
+                    r"(?m)^disable-model-invocation:\s*true\s*$",
+                    f"{skill_dir.name}/SKILL.md must set disable-model-invocation: true",
+                )
+                for anchor in re.findall(r"\]\(PUBLISH-RULES\.md#([^)]+)\)", skill_md):
+                    self.assertIn(
+                        anchor.lower(),
+                        source_headings,
+                        f"{skill_dir.name}/SKILL.md links to missing PUBLISH-RULES.md anchor: #{anchor}",
+                    )
+                self.assertFalse((skill_dir / "REDACTION.md").exists(), f"stale REDACTION.md in {skill_dir.name}")
+
+        self.assertFalse((ROOT / "docs/publication-redaction.md").exists(), "stale docs/publication-redaction.md")
+
     def test_docs_markdown_links_resolve(self):
-        """Relative markdown links in README/docs/skill READMEs point at real files."""
-        docs = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md")),
-                *sorted((ROOT / "skills").glob("*/README.md"))]
+        """Relative markdown links in AGENTS/README/docs/skills point at real files."""
+        docs = [
+            ROOT / "AGENTS.md",
+            ROOT / "README.md",
+            *sorted((ROOT / "docs").glob("*.md")),
+            *sorted((ROOT / "skills").glob("*/README.md")),
+            *sorted((ROOT / "skills").glob("*/SKILL.md")),
+        ]
         for doc in docs:
             text = doc.read_text(encoding="utf-8")
-            for target in re.findall(r"\]\(([^)#?]+?\.md)\)", text):
+            for target in re.findall(r"\]\(([^)#?]+?\.md)(?:#[^)]*)?\)", text):
                 if target.startswith(("http", "~", "/")):
                     continue
                 self.assertTrue((doc.parent / target).resolve().exists(),
-                                f"{doc.name} links to missing file: {target}")
+                                f"{doc.relative_to(ROOT)} links to missing file: {target}")
 
     def test_workflow_image_name_is_fully_qualified(self):
         text = (ROOT / ".github" / "workflows" / "docker.yml").read_text(encoding="utf-8")
